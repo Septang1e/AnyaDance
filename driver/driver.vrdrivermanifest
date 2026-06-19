@@ -1,0 +1,11 @@
+{
+    "file_format_version": 1,
+    "interface_version": "1.0.0",
+    "name": "anyadance",
+    "log_level": "info",
+    "alwaysActivate": true,
+    "resourceOnly": false,
+    "hmd_presence": [
+        "*.*"
+    ]
+}

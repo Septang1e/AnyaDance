@@ -1,0 +1,154 @@
+#include "core/manipulation.h"
+
+namespace anyadance {
+namespace {
+
+Quat RotationDelta(float yaw, float pitch, float roll) {
+    Quat delta = FromYaw(yaw);
+    if (pitch != 0.0f) {
+        delta = Multiply(delta, FromAxisAngle({1.0f, 0.0f, 0.0f}, pitch));
+    }
+    if (roll != 0.0f) {
+        delta = Multiply(delta, FromAxisAngle({0.0f, 0.0f, 1.0f}, roll));
+    }
+    return Normalized(delta);
+}
+
+void ApplyRotation(DeviceState& device, Quat startRotation, Quat yawBasis, float yawCounts, float pitchCounts, float rollCounts) {
+    const float yaw = -yawCounts * DegToRad(kRotationDegreesPerCount);
+    const float pitch = ClampFloat(-pitchCounts * kRotationDegreesPerCount, -kPitchLimitDegrees, kPitchLimitDegrees);
+    const float roll = rollCounts * DegToRad(kRotationDegreesPerCount);
+    // Rotate about the head-aligned axes so pitch/roll match where the head faces,
+    // consistent with the yaw-basis translation. Conjugating by the basis re-expresses
+    // the world-axis delta about the basis axes; yaw (about Y) is left unchanged since
+    // the basis is itself a yaw rotation.
+    const Quat delta = RotationDelta(yaw, DegToRad(pitch), roll);
+    const Quat deltaInBasis = Normalized(Multiply(Multiply(yawBasis, delta), Conjugate(yawBasis)));
+    device.rotation = Normalized(Multiply(deltaInBasis, startRotation));
+}
+
+Vec3 Subtract(Vec3 lhs, Vec3 rhs) {
+    return {lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z};
+}
+
+// Translate Y by the accumulated vertical drag, clamped to the shared kMaxDeviceY
+// ceiling. When the target overshoots the ceiling, re-anchor the accumulator to
+// the exact cap so a reversed drag descends immediately from 2 m, instead of
+// first unwinding overshoot that never moved the (already clamped) device.
+float ClampedDragY(float startY, float& accumulatedDy) {
+    float targetY = startY - accumulatedDy * kTranslationMetersPerCount;
+    if (targetY > kMaxDeviceY) {
+        accumulatedDy = (startY - kMaxDeviceY) / kTranslationMetersPerCount;
+        targetY = kMaxDeviceY;
+    }
+    return targetY;
+}
+
+Quat MirrorRotationInYawBasis(Quat worldRotation, float yawBasisRadians) {
+    const Quat yawBasis = FromYaw(yawBasisRadians);
+    Quat localRotation = Normalized(Multiply(Conjugate(yawBasis), worldRotation));
+    localRotation.y = -localRotation.y;
+    localRotation.z = -localRotation.z;
+    return Normalized(Multiply(yawBasis, localRotation));
+}
+
+} // namespace
+
+DragSnapshot BeginDrag(const FrameState& frame, DeviceIndex device) {
+    DragSnapshot drag{};
+    drag.startFrame = frame;
+    drag.device = device;
+    drag.hmdYawBasis = YawFromQuaternion(frame.devices[DeviceSlot(DeviceIndex::Hmd)].rotation);
+    return drag;
+}
+
+void ApplyDragDelta(DragSnapshot& drag, FrameState& frame, float dxCounts, float dyCounts, int modifiers,
+                    ManipulationFrame manipulationFrame) {
+    drag.accumulatedDx += dxCounts;
+    drag.accumulatedDy += dyCounts;
+
+    const bool ctrl = (modifiers & ManipulationModifier_Ctrl) != 0;
+    const bool shift = (modifiers & ManipulationModifier_Shift) != 0;
+    const std::size_t slot = DeviceSlot(drag.device);
+    DeviceState device = drag.startFrame.devices[slot];
+    // Both translation and rotation act in this basis: the head heading in Hmd mode,
+    // or fixed world axes (identity) in Global mode. Vertical translation is world up
+    // either way.
+    const Quat basis = manipulationFrame == ManipulationFrame::Global ? FromYaw(0.0f) : FromYaw(drag.hmdYawBasis);
+
+    if (drag.device == DeviceIndex::Hmd) {
+        device.position = drag.startFrame.devices[slot].position;
+        if (ctrl && shift) {
+            ApplyRotation(device, drag.startFrame.devices[slot].rotation, basis, 0.0f, 0.0f, drag.accumulatedDx);
+        } else if (shift) {
+            // The head allows vertical (Y) translation; horizontal and depth stay
+            // locked so the play-space origin does not drift. Y is clamped to the
+            // shared kMaxDeviceY ceiling, like every other device.
+            device.position.y = ClampedDragY(drag.startFrame.devices[slot].position.y, drag.accumulatedDy);
+            device.y_clamped = device.position.y >= kMaxDeviceY &&
+                               drag.startFrame.devices[slot].position.y != device.position.y;
+        } else {
+            ApplyRotation(device, drag.startFrame.devices[slot].rotation, basis, drag.accumulatedDx, drag.accumulatedDy, 0.0f);
+        }
+        frame.devices[slot] = device;
+        return;
+    }
+
+    if (ctrl && shift) {
+        ApplyRotation(device, drag.startFrame.devices[slot].rotation, basis, 0.0f, 0.0f, drag.accumulatedDx);
+    } else if (ctrl) {
+        ApplyRotation(device, drag.startFrame.devices[slot].rotation, basis, drag.accumulatedDx, drag.accumulatedDy, 0.0f);
+    } else if (shift) {
+        const Vec3 forward = Rotate(basis, {0.0f, 0.0f, 1.0f});
+        device.position = Add(device.position, Scale(forward, drag.accumulatedDy * kTranslationMetersPerCount));
+    } else {
+        const Vec3 right = Rotate(basis, {1.0f, 0.0f, 0.0f});
+        device.position = Add(device.position, Scale(right, drag.accumulatedDx * kTranslationMetersPerCount));
+        device.position.y = ClampedDragY(drag.startFrame.devices[slot].position.y, drag.accumulatedDy);
+    }
+
+    device.position.y = ClampDeviceY(device.position.y);
+    device.y_clamped = device.position.y >= kMaxDeviceY && drag.startFrame.devices[slot].position.y != device.position.y;
+    frame.devices[slot] = device;
+}
+
+bool MirroredDeviceFor(DeviceIndex device, DeviceIndex& mirroredDevice) {
+    switch (device) {
+    case DeviceIndex::LeftController:
+        mirroredDevice = DeviceIndex::RightController;
+        return true;
+    case DeviceIndex::RightController:
+        mirroredDevice = DeviceIndex::LeftController;
+        return true;
+    case DeviceIndex::LeftFoot:
+        mirroredDevice = DeviceIndex::RightFoot;
+        return true;
+    case DeviceIndex::RightFoot:
+        mirroredDevice = DeviceIndex::LeftFoot;
+        return true;
+    default:
+        return false;
+    }
+}
+
+void ApplySymmetricMirror(const DragSnapshot& drag, FrameState& frame, DeviceIndex mirroredDevice,
+                          ManipulationFrame manipulationFrame) {
+    const std::size_t activeSlot = DeviceSlot(drag.device);
+    const std::size_t mirroredSlot = DeviceSlot(mirroredDevice);
+    const DeviceState& active = frame.devices[activeSlot];
+    DeviceState mirrored = frame.devices[mirroredSlot];
+
+    const float yawBasisRadians = manipulationFrame == ManipulationFrame::Global ? 0.0f : drag.hmdYawBasis;
+    const Quat yawBasis = FromYaw(yawBasisRadians);
+    const Vec3 origin = frame.devices[DeviceSlot(DeviceIndex::Hmd)].position;
+    Vec3 activeLocal = Rotate(Conjugate(yawBasis), Subtract(active.position, origin));
+    activeLocal.x = -activeLocal.x;
+    mirrored.position = Add(origin, Rotate(yawBasis, activeLocal));
+    mirrored.position.y = ClampDeviceY(mirrored.position.y);
+    mirrored.y_clamped = mirrored.position.y >= kMaxDeviceY;
+    mirrored.rotation = MirrorRotationInYawBasis(active.rotation, yawBasisRadians);
+
+    frame.devices[mirroredSlot] = mirrored;
+}
+
+} // namespace anyadance

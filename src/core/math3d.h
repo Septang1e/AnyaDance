@@ -1,0 +1,36 @@
+#pragma once
+
+#include "core/constants.h"
+
+namespace anyadance {
+
+struct Vec3 {
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+};
+
+struct Quat {
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+    float w = 1.0f;
+};
+
+bool IsFinite(Vec3 v);
+bool IsFinite(Quat q);
+float LengthSquared(Quat q);
+bool NormalizeIfAcceptable(Quat& q);
+Quat Normalized(Quat q);
+Quat Conjugate(Quat q);
+Quat Multiply(Quat lhs, Quat rhs);
+Quat FromAxisAngle(Vec3 axis, float radians);
+Quat FromYaw(float yawRadians);
+Vec3 Rotate(Quat rotation, Vec3 value);
+float YawFromQuaternion(Quat rotation);
+Vec3 Add(Vec3 lhs, Vec3 rhs);
+Vec3 Scale(Vec3 value, float scalar);
+float ClampFloat(float value, float low, float high);
+float ClampDeviceY(float y);
+
+} // namespace anyadance

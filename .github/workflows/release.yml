@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, test, and publish release
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure
+        shell: pwsh
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build --config Release
+
+      - name: Test
+        shell: pwsh
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Prepare release asset
+        id: asset
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $source = "build/out/AnyaDance.zip"
+          if (-not (Test-Path $source)) {
+            throw "Release package not found: $source"
+          }
+
+          $assetName = "AnyaDance-$tag-windows-x64.zip"
+          $assetPath = Join-Path $PWD $assetName
+          Copy-Item $source $assetPath -Force
+
+          "asset_name=$assetName" >> $env:GITHUB_OUTPUT
+          "asset_path=$assetPath" >> $env:GITHUB_OUTPUT
+
+      - name: Publish GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $assetPath = "${{ steps.asset.outputs.asset_path }}"
+          $assetName = "${{ steps.asset.outputs.asset_name }}"
+
+          gh release view $tag --repo "${{ github.repository }}"
+          if ($LASTEXITCODE -ne 0) {
+            gh release create $tag `
+              "$assetPath#$assetName" `
+              --repo "${{ github.repository }}" `
+              --generate-notes `
+              --verify-tag
+          } else {
+            gh release upload $tag `
+              "$assetPath#$assetName" `
+              --repo "${{ github.repository }}" `
+              --clobber
+          }

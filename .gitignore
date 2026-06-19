@@ -1,0 +1,44 @@
+# Build outputs
+/build*/
+/out/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+
+# Native binaries and symbols
+*.dll
+*.exe
+*.lib
+*.exp
+*.pdb
+*.ilk
+*.obj
+*.idb
+*.ipdb
+*.iobj
+
+# IDE and local state
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.VC.db
+*.VC.opendb
+
+# SteamVR and local config backups
+*.vrsettings.backup
+*.vrpath.backup
+AnyaDance.local.json
+
+# Temporary files
+*.tmp
+*.log
+.DS_Store
+Thumbs.db
+
+# Python bytecode (the Blender export script is plain Python, no build step)
+__pycache__/
+*.pyc

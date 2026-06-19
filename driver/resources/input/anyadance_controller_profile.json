@@ -1,0 +1,68 @@
+{
+  "jsonid": "input_profile",
+  "controller_type": "knuckles",
+  "input_bindingui_mode": "controller_handed",
+  "input_bindingui_left": {
+    "image": "{indexcontroller}/icons/indexcontroller_left.svg"
+  },
+  "input_bindingui_right": {
+    "image": "{indexcontroller}/icons/indexcontroller_right.svg"
+  },
+  "input_source": {
+    "/input/trigger": {
+      "binding_image_point": [250, 60],
+      "type": "trigger",
+      "click": true,
+      "value": true,
+      "order": 1
+    },
+    "/input/application_menu": {
+      "binding_image_point": [320, 60],
+      "type": "button",
+      "click": true,
+      "order": 2
+    },
+    "/input/a": {
+      "binding_image_point": [320, 100],
+      "type": "button",
+      "click": true,
+      "order": 5
+    },
+    "/input/b": {
+      "binding_image_point": [320, 140],
+      "type": "button",
+      "click": true,
+      "order": 6
+    },
+    "/input/grip": {
+      "binding_image_point": [210, 130],
+      "type": "trigger",
+      "click": true,
+      "touch": true,
+      "value": true,
+      "force": true,
+      "order": 7
+    },
+    "/input/thumbstick": {
+      "binding_image_point": [390, 60],
+      "type": "joystick",
+      "order": 3
+    },
+    "/input/trackpad": {
+      "binding_image_point": [460, 60],
+      "type": "trackpad",
+      "order": 4
+    },
+    "/input/skeleton/left": {
+      "type": "skeleton",
+      "skeleton": "/skeleton/hand/left",
+      "order": 10
+    },
+    "/input/skeleton/right": {
+      "type": "skeleton",
+      "skeleton": "/skeleton/hand/right",
+      "order": 11
+    }
+  },
+  "default_bindings": []
+}
