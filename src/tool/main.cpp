@@ -635,7 +635,7 @@ float DrawFooterBanner(const ImVec2& footerMin, const ImVec2& footerSize) {
         imageMax,
         ImVec2(0.0f, 0.0f),
         ImVec2(1.0f, 1.0f),
-        IM_COL32(255, 255, 255, 255));
+        IM_COL32(255, 255, 255, 120));
     draw->PopClipRect();
     return imageMin.x - style.ItemSpacing.x;
 }
@@ -1493,6 +1493,7 @@ void RenderDanceDialog(HWND hwnd) {
 
     ImGui::PushTextWrapPos(620.0f);
     ImGui::TextUnformatted(Tr(Text::DanceHelp));
+    ImGui::TextColored(ImVec4(1.0f, 0.78f, 0.34f, 1.0f), "%s", Tr(Text::DanceExperimental));
     ImGui::PopTextWrapPos();
     ImGui::Separator();
 

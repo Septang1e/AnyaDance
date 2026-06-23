@@ -85,6 +85,7 @@ enum class Text : std::size_t {
     DanceClose,
     DanceConverting,
     DanceHelp,
+    DanceExperimental,
     DanceReason,
     DancePlaying,
     DanceAdvanced,

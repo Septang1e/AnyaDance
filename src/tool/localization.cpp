@@ -103,6 +103,9 @@ const char* const kStrings[kTextCount][kLanguageCount] = {
     /* DanceHelp             */
     {"Use Advanced to set Blender and MMD Tools paths for custom installs. Those paths are saved for next time.",
      u8"自定义安装路径可在“高级”中设置 Blender 路径与 MMD Tools 路径。这些路径会保存以便下次使用。"},
+    /* DanceExperimental     */
+    {"MMD conversion is still experimental and may not be accurate.",
+     u8"MMD 转换仍是实验性功能，结果可能不准确。"},
     /* DanceReason           */ {"MMD dance", u8"MMD 舞蹈"},
     /* DancePlaying          */ {"Playing MMD dance", u8"正在播放 MMD 舞蹈"},
     /* DanceAdvanced         */ {"Advanced", u8"高级"},
