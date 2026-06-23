@@ -83,6 +83,20 @@ function Get-AnyaDanceBackupPath {
     return Join-Path (Join-Path $env:LOCALAPPDATA "AnyaDance") "steamvr.vrsettings.backup"
 }
 
+# The exact driver-root path registered, recorded in the stable per-user AppData
+# folder. Shared with the in-tool register/unregister (same file name), so either
+# entry point can clean up the other's registration even after the bundle moves.
+function Get-AnyaDanceRegisteredPathRecord {
+    return Join-Path (Join-Path $env:LOCALAPPDATA "AnyaDance") "registered_driver_path.txt"
+}
+
+# Write text as UTF-8 without a BOM so the C++ tool, which reads the record as raw
+# bytes, matches the path exactly.
+function Write-AnyaDanceTextFile {
+    param([string]$Path, [string]$Content)
+    [System.IO.File]::WriteAllText($Path, $Content, (New-Object System.Text.UTF8Encoding($false)))
+}
+
 function Resolve-SteamExe {
     param([string]$SteamExe)
 

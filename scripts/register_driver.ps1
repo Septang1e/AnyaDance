@@ -75,4 +75,9 @@ Set-JsonProperty -Object $power -Name "pauseCompositorOnStandby" -Value $false
 $settingsJson = $settings | ConvertTo-Json -Depth 32
 Set-Content -LiteralPath $SteamConfigPath -Value $settingsJson -Encoding UTF8
 Write-Host "Wrote AnyaDance fully-virtual settings to $SteamConfigPath" -ForegroundColor Green
+
+# Record the exact path we registered (the AnyaDance AppData folder already exists
+# from the backup step) so a later unregister can remove it even if the bundle is
+# moved afterward.
+Write-AnyaDanceTextFile -Path (Get-AnyaDanceRegisteredPathRecord) -Content $DriverRoot
 Write-Host "Restart SteamVR for registration and startup setting changes to take effect." -ForegroundColor Yellow

@@ -201,7 +201,8 @@ X     按住时右扳机
 2. 删除你解压的 AnyaDance 文件夹。
 3. 可选：删除工具在 AppData 中保存的状态：
    - `%LOCALAPPDATA%\AnyaDance\tool_state.ini` — 保存的偏好设置（窗口大小、路径、窗口置顶等）
-   - `%LOCALAPPDATA%\AnyaDance\steamvr.vrsettings.backup` — 注册时备份的 SteamVR 设置文件
+   - `%LOCALAPPDATA%\AnyaDance\steamvr.vrsettings.backup` — 注册时备份的 SteamVR 设置文件（取消注册时自动删除）
+   - `%LOCALAPPDATA%\AnyaDance\registered_driver_path.txt` — 注册时记录的驱动路径，便于在文件夹被移动后仍能取消注册（取消注册时自动删除）
 
 如果在删除文件夹之前跳过了第 1 步，SteamVR 仍会引用（现已不存在的）驱动路径。可从脚本文件夹的副本运行 `unregister_driver.ps1`，或手动在 `%LOCALAPPDATA%\openvr\openvrpaths.vrpath` 中移除该驱动条目。
 

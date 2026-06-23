@@ -219,7 +219,8 @@ You can also unregister from within the tool using the **Unregister Driver** but
 2. Delete the AnyaDance folder you extracted.
 3. Optionally delete the tool's saved state from AppData:
    - `%LOCALAPPDATA%\AnyaDance\tool_state.ini` — saved preferences (window size, paths, always-on-top, etc.)
-   - `%LOCALAPPDATA%\AnyaDance\steamvr.vrsettings.backup` — the SteamVR settings backup made during registration
+   - `%LOCALAPPDATA%\AnyaDance\steamvr.vrsettings.backup` — the SteamVR settings backup made during registration (removed automatically on unregister)
+   - `%LOCALAPPDATA%\AnyaDance\registered_driver_path.txt` — the path recorded at registration so unregister can find the bundle even if it moved (removed automatically on unregister)
 
 If you skip step 1 before deleting the folder, SteamVR will still reference the (now missing) driver path. Run `unregister_driver.ps1` from a copy of the scripts folder, or remove the driver entry manually from `%LOCALAPPDATA%\openvr\openvrpaths.vrpath`.
 

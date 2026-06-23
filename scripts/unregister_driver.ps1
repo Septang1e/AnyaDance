@@ -22,7 +22,17 @@ if ($StopSteamVR) {
     Get-Process vrcompositor -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
 }
 
+# The bundle may have moved since registration, so $DriverRoot no longer matches
+# the registered path. Also remove the exact path recorded at register time.
+$recordPath = Get-AnyaDanceRegisteredPathRecord
+$recordedRoot = $null
+if (Test-Path $recordPath) { $recordedRoot = ([System.IO.File]::ReadAllText($recordPath)).Trim() }
+
 & $vrpathreg removedriver $DriverRoot 2>$null | Out-Null
+if ($recordedRoot -and ($recordedRoot -ne $DriverRoot)) {
+    Write-Host "Removing recorded registration at $recordedRoot" -ForegroundColor Cyan
+    & $vrpathreg removedriver $recordedRoot 2>$null | Out-Null
+}
 Write-Host "Registration state after removal:" -ForegroundColor Cyan
 & $vrpathreg finddriver anyadance
 
@@ -37,4 +47,5 @@ if (Test-Path $BackupPath) {
 } else {
     Write-Host "No SteamVR settings backup found; leaving current settings in place" -ForegroundColor Yellow
 }
+if (Test-Path $recordPath) { Remove-Item -LiteralPath $recordPath -Force }
 $global:LASTEXITCODE = 0

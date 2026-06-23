@@ -70,6 +70,24 @@ fs::path BackupPath() {
     return EnvPath(L"LOCALAPPDATA") / L"AnyaDance" / L"steamvr.vrsettings.backup";
 }
 
+// Register records the exact driver-root path it added to openvrpaths here, in the
+// stable per-user AppData folder. The folder name never moves, so Unregister can
+// remove the original entry even if the bundle was moved or renamed after it was
+// registered. PathToUtf8/SamePath compare these consistently.
+fs::path RegisteredPathRecord() {
+    return EnvPath(L"LOCALAPPDATA") / L"AnyaDance" / L"registered_driver_path.txt";
+}
+
+// Drop trailing CR/LF/whitespace so a recorded path round-trips through SamePath,
+// which compares lengths exactly.
+std::string TrimTrailing(std::string value) {
+    while (!value.empty() &&
+           (value.back() == '\r' || value.back() == '\n' || value.back() == ' ' || value.back() == '\t')) {
+        value.pop_back();
+    }
+    return value;
+}
+
 std::optional<std::wstring> ReadRegistryString(HKEY root, const wchar_t* subkey, const wchar_t* valueName) {
     wchar_t buffer[1024] = {};
     DWORD bytes = sizeof(buffer);
@@ -263,6 +281,10 @@ DriverActionResult RegisterDriver() {
             return {false, DriverStatus::ConfigWriteFailed, {}};
         }
 
+        // Best-effort: remember the exact path we registered so a later Unregister
+        // can clean it up even if the bundle folder is moved afterward.
+        WriteTextFile(RegisteredPathRecord(), driverUtf8);
+
         return {true, DriverStatus::Registered, {}};
     } catch (const std::exception& e) {
         return {false, DriverStatus::Failed, e.what()};
@@ -272,6 +294,12 @@ DriverActionResult RegisterDriver() {
 DriverActionResult UnregisterDriver() {
     try {
         const std::string driverUtf8 = PathToUtf8(DriverRoot());
+        // The bundle may have been moved since it was registered; fall back to the
+        // path recorded at register time so the original entry is removed too.
+        std::string recordedUtf8;
+        if (std::optional<std::string> recorded = ReadTextFile(RegisteredPathRecord())) {
+            recordedUtf8 = TrimTrailing(*recorded);
+        }
         const fs::path pathsFile = OpenvrPathsFile();
         fs::path settingsPath(L"C:\\Program Files (x86)\\Steam\\config\\steamvr.vrsettings");
 
@@ -281,7 +309,11 @@ DriverActionResult UnregisterDriver() {
                 if (Value* drivers = pathsJson->Find("external_drivers"); drivers && drivers->IsArray()) {
                     auto& entries = drivers->array;
                     entries.erase(std::remove_if(entries.begin(), entries.end(), [&](const Value& v) {
-                        return v.type == anyadance::json::Type::String && SamePath(v.string, driverUtf8);
+                        if (v.type != anyadance::json::Type::String) {
+                            return false;
+                        }
+                        return SamePath(v.string, driverUtf8) ||
+                               (!recordedUtf8.empty() && SamePath(v.string, recordedUtf8));
                     }), entries.end());
                     if (!WriteTextFile(pathsFile, anyadance::json::Serialize(*pathsJson))) {
                         return {false, DriverStatus::ConfigWriteFailed, {}};
@@ -296,6 +328,7 @@ DriverActionResult UnregisterDriver() {
             fs::copy_file(backupPath, settingsPath, fs::copy_options::overwrite_existing, ec);
             fs::remove(backupPath, ec);
         }
+        fs::remove(RegisteredPathRecord(), ec);
         return {true, DriverStatus::Unregistered, {}};
     } catch (const std::exception& e) {
         return {false, DriverStatus::Failed, e.what()};
