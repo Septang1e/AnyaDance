@@ -39,6 +39,9 @@ const char* const kStrings[kTextCount][kLanguageCount] = {
     /* FrameLabel            */ {"Move/rotate", u8"移动/旋转参考系"},
     /* FrameHmd              */ {"HMD", u8"头显"},
     /* FrameGlobal           */ {"Global", u8"全局"},
+    /* UiModeLabel           */ {"UI", u8"界面"},
+    /* UiModeFull            */ {"Full", u8"完整"},
+    /* UiModeMini            */ {"Mini", u8"迷你"},
     /* AlwaysOnTop           */ {"Always on top", u8"窗口置顶"},
     /* RegisterDriver        */ {"Register Driver", u8"注册驱动"},
     /* UnregisterDriver      */ {"Unregister Driver", u8"取消注册"},
@@ -106,6 +109,7 @@ const char* const kStrings[kTextCount][kLanguageCount] = {
     /* DanceExperimental     */
     {"MMD conversion is still experimental and may not be accurate.",
      u8"MMD 转换仍是实验性功能，结果可能不准确。"},
+    /* DanceTimeline         */ {"Timeline", u8"时间轴"},
     /* DanceReason           */ {"MMD dance", u8"MMD 舞蹈"},
     /* DancePlaying          */ {"Playing MMD dance", u8"正在播放 MMD 舞蹈"},
     /* DanceAdvanced         */ {"Advanced", u8"高级"},

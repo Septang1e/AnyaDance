@@ -57,4 +57,16 @@ PoseSample ToPoseSample(const FrameState& frame, DeviceIndex index) {
     return sample;
 }
 
+void ApplyDanceFingerBends(const std::array<ControllerState, 2>& danceControllers,
+                           std::array<ControllerState, 2>& controllers,
+                           std::array<FingerBends, 2>& fingerStore) {
+    for (std::size_t i = 0; i < danceControllers.size(); ++i) {
+        if (danceControllers[i].has_finger_bends) {
+            controllers[i].has_finger_bends = true;
+            controllers[i].finger_bends = danceControllers[i].finger_bends;
+            fingerStore[i] = danceControllers[i].finger_bends;
+        }
+    }
+}
+
 } // namespace anyadance

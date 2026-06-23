@@ -17,10 +17,13 @@ namespace {
 constexpr const char* kDriverSettingsSection = anyadance::kDriverSettingsSection;
 constexpr int32_t kDefaultWindowX = 0;
 constexpr int32_t kDefaultWindowY = 0;
+// Defaults are 1080p to keep the compositor's render cost modest; advanced users
+// can raise them (for example to 4K, 3840x2160) through the headset_render_width
+// / headset_render_height settings without rebuilding the driver.
 constexpr uint32_t kDefaultWindowWidth = 1920;
 constexpr uint32_t kDefaultWindowHeight = 1080;
-constexpr uint32_t kRenderWidth = 1920;
-constexpr uint32_t kRenderHeight = 1080;
+constexpr uint32_t kDefaultRenderWidth = 1920;
+constexpr uint32_t kDefaultRenderHeight = 1080;
 
 enum class HeadsetWindowEyeMode {
     Left,
@@ -33,6 +36,8 @@ struct DisplaySettings {
     int32_t windowY = kDefaultWindowY;
     uint32_t windowWidth = kDefaultWindowWidth;
     uint32_t windowHeight = kDefaultWindowHeight;
+    uint32_t renderWidth = kDefaultRenderWidth;
+    uint32_t renderHeight = kDefaultRenderHeight;
     HeadsetWindowEyeMode eyeMode = HeadsetWindowEyeMode::Left;
     bool preserveAspect = true;
 };
@@ -73,6 +78,10 @@ DisplaySettings LoadDisplaySettings() {
         std::max(1, GetInt32Setting("headset_window_width", static_cast<int32_t>(kDefaultWindowWidth))));
     settings.windowHeight = static_cast<uint32_t>(
         std::max(1, GetInt32Setting("headset_window_height", static_cast<int32_t>(kDefaultWindowHeight))));
+    settings.renderWidth = static_cast<uint32_t>(
+        std::max(1, GetInt32Setting("headset_render_width", static_cast<int32_t>(kDefaultRenderWidth))));
+    settings.renderHeight = static_cast<uint32_t>(
+        std::max(1, GetInt32Setting("headset_render_height", static_cast<int32_t>(kDefaultRenderHeight))));
     settings.eyeMode = GetEyeModeSetting();
     settings.preserveAspect = GetBoolSetting("headset_window_preserve_aspect", true);
     return settings;
@@ -84,14 +93,14 @@ void CenterAspectViewport(
     uint32_t regionWidth,
     uint32_t regionHeight,
     bool preserveAspect,
+    float eyeAspect,
     uint32_t* pnX,
     uint32_t* pnY,
     uint32_t* pnWidth,
     uint32_t* pnHeight) {
     uint32_t width = regionWidth;
     uint32_t height = regionHeight;
-    if (preserveAspect && regionWidth > 0 && regionHeight > 0) {
-        const float eyeAspect = static_cast<float>(kRenderWidth) / static_cast<float>(kRenderHeight);
+    if (preserveAspect && regionWidth > 0 && regionHeight > 0 && eyeAspect > 0.0f) {
         const float regionAspect = static_cast<float>(regionWidth) / static_cast<float>(regionHeight);
         if (regionAspect > eyeAspect) {
             height = regionHeight;
@@ -505,8 +514,8 @@ struct VirtualDevice::DisplayComponent final : public IVRDisplayComponent {
     }
 
     void GetRecommendedRenderTargetSize(uint32_t* pnWidth, uint32_t* pnHeight) override {
-        *pnWidth = kRenderWidth;
-        *pnHeight = kRenderHeight;
+        *pnWidth = m_settings.renderWidth;
+        *pnHeight = m_settings.renderHeight;
     }
 
     void GetEyeOutputViewport(EVREye eEye, uint32_t* pnX, uint32_t* pnY, uint32_t* pnWidth, uint32_t* pnHeight) override {
@@ -539,6 +548,7 @@ struct VirtualDevice::DisplayComponent final : public IVRDisplayComponent {
             std::max<uint32_t>(1, regionWidth),
             std::max<uint32_t>(1, regionHeight),
             m_settings.preserveAspect,
+            static_cast<float>(m_settings.renderWidth) / static_cast<float>(m_settings.renderHeight),
             pnX,
             pnY,
             pnWidth,
@@ -549,7 +559,7 @@ struct VirtualDevice::DisplayComponent final : public IVRDisplayComponent {
         // Bounds are tangents of the half-FOV angles. The render target is 16:9,
         // so the horizontal extent must be widened by the aspect ratio; a square
         // (+/-1) frustum into a 16:9 target stretches the image horizontally.
-        const float aspect = static_cast<float>(kRenderWidth) / static_cast<float>(kRenderHeight);
+        const float aspect = static_cast<float>(m_settings.renderWidth) / static_cast<float>(m_settings.renderHeight);
         *pfLeft = -aspect;
         *pfRight = aspect;
         *pfTop = -1.0f;

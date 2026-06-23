@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cmath>
 #include <condition_variable>
 #include <cstdio>
 #include <cstring>
@@ -78,7 +79,31 @@ constexpr int kDefaultWindowWidth = 980;
 constexpr int kDefaultWindowHeight = 780;
 constexpr int kMinWindowWidth = 980;
 constexpr int kMinWindowHeight = 780;
+constexpr int kMiniWindowWidth = 360;
+constexpr int kMiniWindowHeight = 480;
+constexpr int kMiniMinWindowWidth = 280;
+constexpr int kMiniMinWindowHeight = 340;
 constexpr float kFingerBendStep = 0.1f;
+constexpr wchar_t kSingleInstanceMutexName[] = L"Local\\AnyaDance.SingleInstance";
+
+struct ScopedHandle {
+    explicit ScopedHandle(HANDLE value) : handle(value) {}
+    ~ScopedHandle() {
+        if (handle) {
+            CloseHandle(handle);
+        }
+    }
+
+    ScopedHandle(const ScopedHandle&) = delete;
+    ScopedHandle& operator=(const ScopedHandle&) = delete;
+
+    HANDLE handle = nullptr;
+};
+
+enum class UiMode {
+    Full,
+    Mini,
+};
 
 // Number keys held while scrolling over the body panel target a single finger.
 // 1-5 walk the left hand from pinky to thumb; 6-0 walk the right hand from thumb
@@ -313,13 +338,16 @@ struct AppState {
     // Per-hand finger bends ([0] left, [1] right). The wheel adjusts all fingers,
     // or just the one whose number key is held (see kFingerKeys). lastFingerBends
     // tracks the previous values to detect wheel changes for the log.
-    FingerBends fingerBends[2]{};
-    FingerBends lastFingerBends[2]{};
+    std::array<FingerBends, 2> fingerBends{};
+    std::array<FingerBends, 2> lastFingerBends{};
     bool joystickActive = false;  // dragging the empty body panel as the right stick
     ImVec2 joystickOrigin{};      // press point (ImGui space) used as the stick center
     float joystickX = 0.0f;       // current right-stick deflection, [-1, 1]
     float joystickY = 0.0f;
     bool alwaysOnTop = false;
+    UiMode uiMode = UiMode::Full;
+    bool uiModeChangePending = false;
+    UiMode pendingUiMode = UiMode::Full;
     bool disclaimerAccepted = false;
     bool driverStatusSet = false;
     DriverStatus driverStatus = DriverStatus::Failed;
@@ -353,6 +381,8 @@ struct AppState {
 
 AppState g_app;
 
+void ApplyAlwaysOnTop(HWND hwnd, bool onTop);
+
 std::string SettingsDirectory() {
     const char* localAppData = std::getenv("LOCALAPPDATA");
     if (!localAppData || localAppData[0] == '\0') {
@@ -363,6 +393,22 @@ std::string SettingsDirectory() {
 
 std::string SettingsPath() {
     return SettingsDirectory() + "\\tool_state.ini";
+}
+
+const char* UiModeCode(UiMode mode) {
+    return mode == UiMode::Mini ? "mini" : "full";
+}
+
+UiMode ParseUiMode(const std::string& value) {
+    return value == "mini" ? UiMode::Mini : UiMode::Full;
+}
+
+int MinWindowWidth() {
+    return g_app.uiMode == UiMode::Mini ? kMiniMinWindowWidth : kMinWindowWidth;
+}
+
+int MinWindowHeight() {
+    return g_app.uiMode == UiMode::Mini ? kMiniMinWindowHeight : kMinWindowHeight;
 }
 
 void CopyPreferenceString(char* buffer, std::size_t size, const std::string& value) {
@@ -388,6 +434,10 @@ void LoadPreferences(HWND hwnd) {
             int value = 0;
             in >> value;
             g_app.alwaysOnTop = value != 0;
+        } else if (key == "ui_mode") {
+            std::string value;
+            in >> value;
+            g_app.uiMode = ParseUiMode(value);
         } else if (key == "dance_blender_path") {
             std::string value;
             in >> std::quoted(value);
@@ -402,8 +452,8 @@ void LoadPreferences(HWND hwnd) {
             int w = kDefaultWindowWidth;
             int h = kDefaultWindowHeight;
             in >> x >> y >> w >> h;
-            w = std::max(w, kMinWindowWidth);
-            h = std::max(h, kMinWindowHeight);
+            w = std::max(w, MinWindowWidth());
+            h = std::max(h, MinWindowHeight());
             MoveWindow(hwnd, x, y, w, h, FALSE);
         }
     }
@@ -418,6 +468,7 @@ void SavePreferences(HWND hwnd) {
     out << "language " << GetLanguageInfo(CurrentLanguage()).code << '\n';
     out << "disclaimer_accepted " << (g_app.disclaimerAccepted ? 1 : 0) << '\n';
     out << "always_on_top " << (g_app.alwaysOnTop ? 1 : 0) << '\n';
+    out << "ui_mode " << UiModeCode(g_app.uiMode) << '\n';
     out << "dance_blender_path " << std::quoted(std::string(g_app.danceBlenderPath)) << '\n';
     out << "dance_mmd_tools_path " << std::quoted(std::string(g_app.danceMmdToolsPath)) << '\n';
     out << "window " << rect.left << ' ' << rect.top << ' ' << (rect.right - rect.left) << ' ' << (rect.bottom - rect.top) << '\n';
@@ -715,6 +766,54 @@ void ApplyAlwaysOnTop(HWND hwnd, bool onTop) {
                  SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 }
 
+void ApplyUiMode(HWND hwnd, UiMode mode) {
+    g_app.uiMode = mode;
+    g_app.pendingUiMode = mode;
+    g_app.uiModeChangePending = false;
+    RECT rect{};
+    if (GetWindowRect(hwnd, &rect)) {
+        const int currentW = rect.right - rect.left;
+        const int currentH = rect.bottom - rect.top;
+        const int targetW = mode == UiMode::Mini ? kMiniMinWindowWidth : std::max(currentW, kMinWindowWidth);
+        const int targetH = mode == UiMode::Mini ? kMiniMinWindowHeight : std::max(currentH, kMinWindowHeight);
+        SetWindowPos(hwnd, nullptr, rect.left, rect.top, targetW, targetH,
+                     SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
+    }
+}
+
+void SetUiMode(UiMode mode) {
+    if (g_app.uiMode == mode || (g_app.uiModeChangePending && g_app.pendingUiMode == mode)) {
+        return;
+    }
+    g_app.pendingUiMode = mode;
+    g_app.uiModeChangePending = true;
+}
+
+void ApplyPendingUiMode(HWND hwnd) {
+    if (g_app.uiModeChangePending) {
+        ApplyUiMode(hwnd, g_app.pendingUiMode);
+    }
+}
+
+void RenderUiModeControls(HWND hwnd, bool includeAlwaysOnTop) {
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("%s:", Tr(Text::UiModeLabel));
+    ImGui::SameLine();
+    if (ImGui::RadioButton(Tr(Text::UiModeFull), g_app.uiMode == UiMode::Full)) {
+        SetUiMode(UiMode::Full);
+    }
+    ImGui::SameLine();
+    if (ImGui::RadioButton(Tr(Text::UiModeMini), g_app.uiMode == UiMode::Mini)) {
+        SetUiMode(UiMode::Mini);
+    }
+    if (includeAlwaysOnTop) {
+        ImGui::SameLine();
+        if (ImGui::Checkbox(Tr(Text::AlwaysOnTop), &g_app.alwaysOnTop)) {
+            ApplyAlwaysOnTop(hwnd, g_app.alwaysOnTop);
+        }
+    }
+}
+
 int ModifiersForCaptureButton(int captureButton) {
     const bool rightDown = IsKeyDown(VK_RBUTTON);
     if (captureButton == VK_MBUTTON) {
@@ -882,8 +981,10 @@ void HandleKeyboard(HWND hwnd) {
     const auto previous = g_app.frame.controllers;
     g_app.keyboard.UpdateFrameInputs(g_app.frame);
     // While a dance plays it owns the finger bends. UpdateDancePlayback merges
-    // keyboard inputs and streams the final frame.
-    if (!g_app.dancePlaying) {
+    // keyboard inputs and streams the final frame. When paused, the dance loop
+    // returns early, so we apply finger bends here so they are not lost from
+    // the controller frame that UpdateFrameInputs just cleared.
+    if (!g_app.dancePlaying || g_app.dancePaused) {
         ApplyFingerBend(g_app.frame);
     }
     // The keyboard rebuild above resets the right stick to the Q/E turn axis, so
@@ -919,9 +1020,10 @@ void HandleKeyboard(HWND hwnd) {
 
     // Any remaining controller change with no attributed cause falls back to the
     // generic reason (defensive; the cases above normally cover every change).
-    // During dance playback UpdateDancePlayback is the sole streamer, so this path
-    // only updates input state and never sends (avoids dueling finger packets).
-    if (!g_app.dancePlaying && (!reason.empty() || ControllerChanged(previous, g_app.frame.controllers))) {
+    // When playing (not paused), UpdateDancePlayback is the sole streamer to avoid
+    // dueling finger packets. When paused, UpdateDancePlayback returns early, so
+    // stream controller changes here to keep joystick/WASD movement working.
+    if ((!g_app.dancePlaying || g_app.dancePaused) && (!reason.empty() || ControllerChanged(previous, g_app.frame.controllers))) {
         if (reason.empty()) {
             reason = En(Text::KeyboardReason);
         }
@@ -944,9 +1046,9 @@ std::string RotationSummary(const DeviceState& device) {
     return buf;
 }
 
-// Draw one device's box (name, pose, rotation, status badges) and start a mouse
-// drag when it is left- or middle-clicked, so the box doubles as a grab handle.
-void DeviceBox(HWND hwnd, DeviceIndex deviceIndex, ImVec2 size) {
+// Draw one device's box and start a mouse drag when it is left- or middle-clicked,
+// so the box doubles as a grab handle.
+void DeviceBox(HWND hwnd, DeviceIndex deviceIndex, ImVec2 size, bool miniMode = false) {
     const std::size_t slot = DeviceSlot(deviceIndex);
     DeviceState& device = g_app.frame.devices[slot];
     ImGui::InvisibleButton(kDevices[slot].id, size);
@@ -963,12 +1065,14 @@ void DeviceBox(HWND hwnd, DeviceIndex deviceIndex, ImVec2 size) {
     ImVec2 textPos = ImVec2(min.x + 10.0f, min.y + 8.0f);
     draw->AddText(textPos, IM_COL32(245, 247, 250, 255), DeviceName(slot));
     textPos.y += 20.0f;
-    const std::string pos = PoseSummary(device);
-    draw->AddText(textPos, IM_COL32(198, 205, 214, 255), pos.c_str());
-    textPos.y += 18.0f;
-    const std::string rot = RotationSummary(device);
-    draw->AddText(textPos, IM_COL32(198, 205, 214, 255), rot.c_str());
-    textPos.y += 18.0f;
+    if (!miniMode) {
+        const std::string pos = PoseSummary(device);
+        draw->AddText(textPos, IM_COL32(198, 205, 214, 255), pos.c_str());
+        textPos.y += 18.0f;
+        const std::string rot = RotationSummary(device);
+        draw->AddText(textPos, IM_COL32(198, 205, 214, 255), rot.c_str());
+        textPos.y += 18.0f;
+    }
     if (g_app.captureActive && g_app.dragDevice == deviceIndex) {
         draw->AddText(textPos, IM_COL32(107, 203, 119, 255), Tr(Text::Capture));
         textPos.y += 18.0f;
@@ -976,7 +1080,7 @@ void DeviceBox(HWND hwnd, DeviceIndex deviceIndex, ImVec2 size) {
     if (device.position.y >= kMaxDeviceY || device.y_clamped) {
         draw->AddText(ImVec2(max.x - 56.0f, min.y + 8.0f), IM_COL32(255, 196, 87, 255), Tr(Text::YMax));
     }
-    if (deviceIndex == DeviceIndex::Hmd) {
+    if (!miniMode && deviceIndex == DeviceIndex::Hmd) {
         draw->AddText(textPos, IM_COL32(164, 174, 187, 255), Tr(Text::HmdHelp));
     }
     if (leftClicked) {
@@ -998,11 +1102,14 @@ void MirrorCheckbox(const char* id, bool* value, float rowHeight) {
 // Left half of the window: the mouse-help line and the six device boxes laid out
 // over the body silhouette (HMD centered, controllers and feet paired with a
 // Mirror checkbox between them, hip centered).
-void RenderBodyPanel(HWND hwnd) {
+void RenderBodyPanel(HWND hwnd, bool miniMode = false) {
     const float availableW = ImGui::GetContentRegionAvail().x;
-    const float logMinW = 330.0f;
-    float panelW = std::clamp(availableW * 0.46f, 450.0f, 620.0f);
-    panelW = std::min(panelW, std::max(450.0f, availableW - logMinW));
+    float panelW = availableW;
+    if (!miniMode) {
+        const float logMinW = 330.0f;
+        panelW = std::clamp(availableW * 0.46f, 450.0f, 620.0f);
+        panelW = std::min(panelW, std::max(450.0f, availableW - logMinW));
+    }
 
     ImGui::BeginChild("body", ImVec2(panelW, 0), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
     const ImVec2 bodyPanelMin = ImGui::GetWindowPos();
@@ -1031,33 +1138,37 @@ void RenderBodyPanel(HWND hwnd) {
             AdjustAllFingerBends(g_app.fingerBends[0], g_app.fingerBends[1], increment);
         }
     }
-    const float instructionH = ImGui::GetTextLineHeightWithSpacing() * 2.0f;
-    ImGui::BeginChild("mouse_help", ImVec2(panelW - 12.0f, instructionH), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
-    ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + panelW - 12.0f);
-    ImGui::TextUnformatted(Tr(Text::MouseHelp));
-    ImGui::PopTextWrapPos();
-    ImGui::EndChild();
+    if (!miniMode) {
+        const float instructionH = ImGui::GetTextLineHeightWithSpacing() * 2.0f;
+        ImGui::BeginChild("mouse_help", ImVec2(panelW - 12.0f, instructionH), false, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + panelW - 12.0f);
+        ImGui::TextUnformatted(Tr(Text::MouseHelp));
+        ImGui::PopTextWrapPos();
+        ImGui::EndChild();
 
-    // Manipulation frame: HMD moves/rotates along the head heading, Global along
-    // fixed world axes. Vertical translation is world up either way.
-    ImGui::AlignTextToFramePadding();
-    ImGui::TextUnformatted(Tr(Text::FrameLabel));
-    ImGui::SameLine();
-    if (ImGui::RadioButton(Tr(Text::FrameHmd), g_app.manipulationFrame == ManipulationFrame::Hmd)) {
-        g_app.manipulationFrame = ManipulationFrame::Hmd;
-    }
-    ImGui::SameLine();
-    if (ImGui::RadioButton(Tr(Text::FrameGlobal), g_app.manipulationFrame == ManipulationFrame::Global)) {
-        g_app.manipulationFrame = ManipulationFrame::Global;
+        // Manipulation frame: HMD moves/rotates along the head heading, Global along
+        // fixed world axes. Vertical translation is world up either way.
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted(Tr(Text::FrameLabel));
+        ImGui::SameLine();
+        if (ImGui::RadioButton(Tr(Text::FrameHmd), g_app.manipulationFrame == ManipulationFrame::Hmd)) {
+            g_app.manipulationFrame = ManipulationFrame::Hmd;
+        }
+        ImGui::SameLine();
+        if (ImGui::RadioButton(Tr(Text::FrameGlobal), g_app.manipulationFrame == ManipulationFrame::Global)) {
+            g_app.manipulationFrame = ManipulationFrame::Global;
+        }
     }
 
-    const float rowsTopY = ImGui::GetCursorPosY() + 10.0f;
+    const float rowsTopY = ImGui::GetCursorPosY() + (miniMode ? 4.0f : 10.0f);
     const float rowsAvailH = std::max(0.0f, ImGui::GetContentRegionAvail().y - 10.0f);
     const float pairGap = 8.0f;
     const float rowGap = std::clamp(rowsAvailH * 0.018f, 8.0f, 14.0f);
     const float boxH = std::max(1.0f, (rowsAvailH - rowGap * 3.0f) * 0.25f);
     const float mirrorW = ImGui::GetFrameHeight() + ImGui::GetStyle().ItemInnerSpacing.x + ImGui::CalcTextSize(Tr(Text::Mirror)).x;
-    const float boxW = std::clamp((panelW - mirrorW - pairGap * 2.0f) * 0.5f, 150.0f, 240.0f);
+    const float minBoxW = miniMode ? 72.0f : 150.0f;
+    const float maxBoxW = std::max(minBoxW, std::min(240.0f, (panelW - mirrorW - pairGap * 2.0f) * 0.5f));
+    const float boxW = std::clamp((panelW - mirrorW - pairGap * 2.0f) * 0.5f, minBoxW, maxBoxW);
     const float pairRowW = boxW * 2.0f + mirrorW + pairGap * 2.0f;
     const float pairLeftX = std::max(0.0f, (panelW - pairRowW) * 0.5f);
     const float centerX = std::max(0.0f, (panelW - boxW) * 0.5f);
@@ -1066,21 +1177,21 @@ void RenderBodyPanel(HWND hwnd) {
     };
 
     ImGui::SetCursorPos(ImVec2(centerX, rowY(0)));
-    DeviceBox(hwnd, DeviceIndex::Hmd, ImVec2(boxW, boxH));
+    DeviceBox(hwnd, DeviceIndex::Hmd, ImVec2(boxW, boxH), miniMode);
     ImGui::SetCursorPos(ImVec2(pairLeftX, rowY(1)));
-    DeviceBox(hwnd, DeviceIndex::LeftController, ImVec2(boxW, boxH));
+    DeviceBox(hwnd, DeviceIndex::LeftController, ImVec2(boxW, boxH), miniMode);
     ImGui::SameLine(0.0f, pairGap);
     MirrorCheckbox("hands", &g_app.mirrorHands, boxH);
     ImGui::SameLine(0.0f, pairGap);
-    DeviceBox(hwnd, DeviceIndex::RightController, ImVec2(boxW, boxH));
+    DeviceBox(hwnd, DeviceIndex::RightController, ImVec2(boxW, boxH), miniMode);
     ImGui::SetCursorPos(ImVec2(centerX, rowY(2)));
-    DeviceBox(hwnd, DeviceIndex::Hip, ImVec2(boxW, boxH));
+    DeviceBox(hwnd, DeviceIndex::Hip, ImVec2(boxW, boxH), miniMode);
     ImGui::SetCursorPos(ImVec2(pairLeftX, rowY(3)));
-    DeviceBox(hwnd, DeviceIndex::LeftFoot, ImVec2(boxW, boxH));
+    DeviceBox(hwnd, DeviceIndex::LeftFoot, ImVec2(boxW, boxH), miniMode);
     ImGui::SameLine(0.0f, pairGap);
     MirrorCheckbox("feet", &g_app.mirrorFeet, boxH);
     ImGui::SameLine(0.0f, pairGap);
-    DeviceBox(hwnd, DeviceIndex::RightFoot, ImVec2(boxW, boxH));
+    DeviceBox(hwnd, DeviceIndex::RightFoot, ImVec2(boxW, boxH), miniMode);
     ImGui::SetCursorPosY(rowY(3) + boxH);
 
     // Empty area of the body panel acts as the right thumbstick: left-press sets
@@ -1316,13 +1427,78 @@ void StartDanceExport() {
     g_app.danceFuture = std::async(std::launch::async, [config] { return RunMmdExport(config); });
 }
 
+float ClampDanceElapsed(float elapsed) {
+    if (!g_app.danceMotion.valid || g_app.danceMotion.duration <= 0.0f) {
+        return 0.0f;
+    }
+    return std::clamp(elapsed, 0.0f, g_app.danceMotion.duration);
+}
+
+float DanceTimelineElapsed() {
+    if (!g_app.danceMotion.valid || g_app.danceMotion.duration <= 0.0f) {
+        return 0.0f;
+    }
+    if (g_app.dancePaused || !g_app.dancePlaying) {
+        return ClampDanceElapsed(g_app.dancePausedElapsed);
+    }
+    const auto now = std::chrono::steady_clock::now();
+    const float elapsed = std::chrono::duration<float>(now - g_app.danceStartTime).count() * g_app.danceSpeed;
+    if (g_app.danceLoop) {
+        return std::fmod(std::max(0.0f, elapsed), g_app.danceMotion.duration);
+    }
+    return ClampDanceElapsed(elapsed);
+}
+
+void SetDanceStartForElapsed(float elapsed) {
+    const float speed = g_app.danceSpeed != 0.0f ? g_app.danceSpeed : 1.0f;
+    const auto offset = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+        std::chrono::duration<float>(elapsed / speed));
+    g_app.danceStartTime = std::chrono::steady_clock::now() - offset;
+}
+
+void ApplyDanceFrameAt(float elapsed) {
+    if (!g_app.danceMotion.valid) {
+        return;
+    }
+    FrameState danceFrame = SampleDanceMotion(g_app.danceMotion, elapsed, g_app.danceLoop);
+    AnchorDanceFrame(danceFrame, g_app.danceRootX, g_app.danceRootZ);
+
+    const std::array<ControllerState, 2> danceControllers = danceFrame.controllers;
+    // Keep keyboard-driven inputs (joystick turn, triggers) set this frame by
+    // HandleKeyboard; the dance only owns poses and finger bends. Mirroring the
+    // dance fingers into g_app.fingerBends keeps that store the single source of
+    // truth, so Save Pose and the paused stream capture the dance's hands instead
+    // of the stale wheel value.
+    danceFrame.controllers = g_app.frame.controllers;
+    ApplyDanceFingerBends(danceControllers, danceFrame.controllers, g_app.fingerBends);
+    ClampFrameY(danceFrame);
+    g_app.frame = danceFrame;
+    g_app.streamer.UpdateFrame(g_app.frame);  // no reason: keep the 60 Hz log quiet
+}
+
+void SeekDancePlayback(float elapsed) {
+    if (!g_app.danceMotion.valid) {
+        return;
+    }
+    elapsed = ClampDanceElapsed(elapsed);
+    g_app.dancePausedElapsed = elapsed;
+    if (g_app.dancePlaying && !g_app.dancePaused) {
+        SetDanceStartForElapsed(elapsed);
+    }
+    // Root anchor is owned by StartDancePlayback; seeking never changes it.
+    // Re-rooting here from g_app.frame would accumulate because the frame already
+    // has the previous root baked in via AnchorDanceFrame.
+    ApplyDanceFrameAt(elapsed);
+}
+
 void StartDancePlayback() {
     if (!g_app.danceMotion.valid) {
         return;
     }
+    const float startElapsed = ClampDanceElapsed(g_app.dancePausedElapsed);
     g_app.dancePlaying = true;
     g_app.dancePaused = false;
-    g_app.danceStartTime = std::chrono::steady_clock::now();
+    SetDanceStartForElapsed(startElapsed);
     // Anchor the dance where the HMD currently stands so the avatar dances in place.
     const DeviceState& hmd = g_app.frame.devices[DeviceSlot(DeviceIndex::Hmd)];
     g_app.danceRootX = hmd.position.x;
@@ -1335,9 +1511,7 @@ void PauseDancePlayback() {
     if (!g_app.dancePlaying || g_app.dancePaused) {
         return;
     }
-    const auto now = std::chrono::steady_clock::now();
-    g_app.dancePausedElapsed =
-        std::chrono::duration<float>(now - g_app.danceStartTime).count() * g_app.danceSpeed;
+    g_app.dancePausedElapsed = DanceTimelineElapsed();
     g_app.dancePaused = true;
 }
 
@@ -1347,20 +1521,30 @@ void ResumeDancePlayback() {
     if (!g_app.dancePlaying || !g_app.dancePaused) {
         return;
     }
-    const float speed = g_app.danceSpeed != 0.0f ? g_app.danceSpeed : 1.0f;
-    const auto offset = std::chrono::duration_cast<std::chrono::steady_clock::duration>(
-        std::chrono::duration<float>(g_app.dancePausedElapsed / speed));
-    g_app.danceStartTime = std::chrono::steady_clock::now() - offset;
+    SetDanceStartForElapsed(ClampDanceElapsed(g_app.dancePausedElapsed));
     g_app.dancePaused = false;
+}
+
+// Stop any dance playback and rebuild the T-pose at the dance's start anchor. The
+// dance animation can drift the HMD away from where playback began, so the HMD XZ
+// is snapped back to danceRootX/Z before the reset to keep the T-pose at the right
+// world position. Callers stream the resulting frame themselves.
+void StopDanceToTPose() {
+    if (g_app.dancePlaying) {
+        g_app.frame.devices[DeviceSlot(DeviceIndex::Hmd)].position.x = g_app.danceRootX;
+        g_app.frame.devices[DeviceSlot(DeviceIndex::Hmd)].position.z = g_app.danceRootZ;
+    }
+    g_app.dancePlaying = false;
+    g_app.dancePaused = false;
+    g_app.dancePausedElapsed = 0.0f;
+    g_app.frame = BuildResetTPose(g_app.frame);
 }
 
 void StopDancePlayback() {
     if (!g_app.dancePlaying) {
         return;
     }
-    g_app.dancePlaying = false;
-    g_app.dancePaused = false;
-    g_app.frame = BuildResetTPose(g_app.frame);
+    StopDanceToTPose();
     g_app.streamer.UpdateFrame(g_app.frame, En(Text::ResetReason), false);
 }
 
@@ -1371,6 +1555,7 @@ void StopDancePlayback() {
 void RestorePose(const FrameState& pose) {
     g_app.dancePlaying = false;
     g_app.dancePaused = false;
+    g_app.dancePausedElapsed = 0.0f;
     for (std::size_t d = 0; d < g_app.frame.devices.size(); ++d) {
         g_app.frame.devices[d].position = pose.devices[d].position;
         g_app.frame.devices[d].rotation = pose.devices[d].rotation;
@@ -1415,6 +1600,9 @@ void PollDanceExport() {
         g_app.danceStatus = "Retarget failed.";
         return;
     }
+    g_app.dancePlaying = false;
+    g_app.dancePaused = false;
+    g_app.dancePausedElapsed = 0.0f;
     char buf[160];
     std::snprintf(buf, sizeof(buf), "Ready: %.1fs, %zu frames, fingers %s, scale %.2f",
                   g_app.danceMotion.duration,
@@ -1431,27 +1619,12 @@ void UpdateDancePlayback() {
     if (!g_app.dancePlaying || g_app.dancePaused || !g_app.danceMotion.valid) {
         return;  // paused playback holds the last streamed pose in place
     }
-    const auto now = std::chrono::steady_clock::now();
-    float elapsed = std::chrono::duration<float>(now - g_app.danceStartTime).count() * g_app.danceSpeed;
+    float elapsed = DanceTimelineElapsed();
     if (!g_app.danceLoop && g_app.danceMotion.duration > 0.0f && elapsed >= g_app.danceMotion.duration) {
         elapsed = g_app.danceMotion.duration;  // hold the final pose at the end
     }
-    FrameState danceFrame = SampleDanceMotion(g_app.danceMotion, elapsed, g_app.danceLoop);
-    AnchorDanceFrame(danceFrame, g_app.danceRootX, g_app.danceRootZ);
-
-    const std::array<ControllerState, 2> danceControllers = danceFrame.controllers;
-    // Keep keyboard-driven inputs (joystick turn, triggers) set this frame by
-    // HandleKeyboard; the dance only owns poses and finger bends.
-    danceFrame.controllers = g_app.frame.controllers;
-    for (std::size_t i = 0; i < danceControllers.size(); ++i) {
-        if (danceControllers[i].has_finger_bends) {
-            danceFrame.controllers[i].has_finger_bends = true;
-            danceFrame.controllers[i].finger_bends = danceControllers[i].finger_bends;
-        }
-    }
-    ClampFrameY(danceFrame);
-    g_app.frame = danceFrame;
-    g_app.streamer.UpdateFrame(g_app.frame);  // no reason: keep the 60 Hz log quiet
+    g_app.dancePausedElapsed = elapsed;
+    ApplyDanceFrameAt(elapsed);
 }
 
 // File-picker helpers for the dance dialog; fill the target buffer on success.
@@ -1550,6 +1723,16 @@ void RenderDanceDialog(HWND hwnd) {
     }
 
     ImGui::Separator();
+    const float duration = g_app.danceMotion.valid ? g_app.danceMotion.duration : 0.0f;
+    float timeline = DanceTimelineElapsed();
+    ImGui::Text("%s: %.2fs / %.2fs", Tr(Text::DanceTimeline), timeline, duration);
+    ImGui::BeginDisabled(!g_app.danceMotion.valid || duration <= 0.0f);
+    ImGui::SetNextItemWidth(-1.0f);
+    if (ImGui::SliderFloat("##dance_timeline", &timeline, 0.0f, duration, "")) {
+        SeekDancePlayback(timeline);
+    }
+    ImGui::EndDisabled();
+
     // Play stays disabled until a solve (or a loaded clip) is ready and (re)starts
     // from the top; Pause/Resume freezes and continues in place; Stop returns to the
     // T-pose; the Loop checkbox fills the last cell of the row.
@@ -1603,6 +1786,9 @@ void RenderDanceDialog(HWND hwnd) {
             if (ParseNya(ReadFileUtf8(path), clip, error)) {
                 g_app.danceMotion = clip.motion;
                 g_app.danceLoop = clip.loop;
+                g_app.dancePlaying = false;
+                g_app.dancePaused = false;
+                g_app.dancePausedElapsed = 0.0f;
                 char buf[160];
                 std::snprintf(buf, sizeof(buf), "Loaded %zu frames, %.1fs, fingers %s. Press Play.",
                               clip.motion.frames.size(), clip.motion.duration,
@@ -1631,9 +1817,11 @@ void RenderUi(HWND hwnd) {
     ImGui::Begin("AnyaDance", nullptr,
         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
 
+    RenderUiModeControls(hwnd, true);
+    ImGui::Separator();
+
     if (ImGui::Button(Tr(Text::Reset), ImVec2(-1, 44))) {
-        g_app.dancePlaying = false;  // a manual reset also stops any MMD playback
-        g_app.frame = BuildResetTPose(g_app.frame);
+        StopDanceToTPose();  // a manual reset also stops any MMD playback
         g_app.keyboard.Neutralize();
         g_app.fingerBends[0] = FingerBends{};
         g_app.fingerBends[1] = FingerBends{};
@@ -1689,10 +1877,6 @@ void RenderUi(HWND hwnd) {
         if (ImGui::Button(Tr(Text::RestartSteamVr), ImVec2(systemButtonWidth, 0.0f))) {
             restartConfirmRequested = true;
         }
-        if (ImGui::Checkbox(Tr(Text::AlwaysOnTop), &g_app.alwaysOnTop)) {
-            ApplyAlwaysOnTop(hwnd, g_app.alwaysOnTop);
-        }
-
         ImGui::TableSetColumnIndex(1);
         if (ImGui::Button(Tr(Text::DanceOpen), ImVec2(-1.0f, 0.0f))) {
             g_app.danceDialogOpen = true;
@@ -1761,6 +1945,19 @@ void RenderUi(HWND hwnd) {
     ImGui::End();
 }
 
+void RenderMiniUi(HWND hwnd) {
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+    ImGui::Begin("AnyaDance", nullptr,
+        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+
+    RenderUiModeControls(hwnd, true);
+    ImGui::Separator();
+    RenderBodyPanel(hwnd, true);
+
+    ImGui::End();
+}
+
 LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     // The mouse wheel is handled inside the frame (see RenderBodyPanel) so that
     // ImGui window z-order decides whether it bends fingers or scrolls the log.
@@ -1770,8 +1967,8 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
     case WM_GETMINMAXINFO: {
         MINMAXINFO* minMax = reinterpret_cast<MINMAXINFO*>(lParam);
-        minMax->ptMinTrackSize.x = kMinWindowWidth;
-        minMax->ptMinTrackSize.y = kMinWindowHeight;
+        minMax->ptMinTrackSize.x = MinWindowWidth();
+        minMax->ptMinTrackSize.y = MinWindowHeight();
         return 0;
     }
     case WM_SIZE:
@@ -1877,6 +2074,22 @@ DisclaimerAction RenderDisclaimerGate() {
 } // namespace
 
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
+    ScopedHandle instanceMutex(CreateMutexW(nullptr, TRUE, kSingleInstanceMutexName));
+    if (!instanceMutex.handle) {
+        const DWORD err = GetLastError();
+        wchar_t msg[256]{};
+        swprintf_s(msg, L"CreateMutexW failed. GetLastError = %lu", err);
+        MessageBoxW(nullptr, msg, kWindowTitle, MB_OK | MB_ICONERROR);
+        return 1;
+    }
+    if (GetLastError() == ERROR_ALREADY_EXISTS) {
+        if (HWND existing = FindWindowW(kWindowClassName, kWindowTitle)) {
+            ShowWindow(existing, SW_RESTORE);
+            SetForegroundWindow(existing);
+        }
+        return 0;
+    }
+
     const HRESULT comInit = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 
     HICON appIcon = LoadIconW(hInstance, MAKEINTRESOURCEW(IDI_APPICON));
@@ -2013,7 +2226,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
         ImGui::NewFrame();
 
         if (g_app.disclaimerAccepted) {
-            RenderUi(hwnd);
+            if (g_app.uiMode == UiMode::Mini) {
+                RenderMiniUi(hwnd);
+            } else {
+                RenderUi(hwnd);
+            }
         } else {
             switch (RenderDisclaimerGate()) {
             case DisclaimerAction::Accept:
@@ -2036,6 +2253,8 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int nCmdShow) {
         g_deviceContext->ClearRenderTargetView(g_mainRenderTargetView, clearColor);
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
         g_swapChain->Present(1, 0);
+
+        ApplyPendingUiMode(hwnd);
     }
 
     ReleaseMouseCapture();

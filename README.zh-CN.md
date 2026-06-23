@@ -1,6 +1,6 @@
 # AnyaDance
 
-![Project Anya banner](driver/resources/images/anya_banner.png)
+![AnyaDance 主界面](docs/images/ui_main_zh.png)
 
 [English](README.md) | **简体中文**
 
@@ -94,6 +94,25 @@ ctest --test-dir build -C Release --output-on-failure
 
 在更改注册或重新构建驱动 DLL 后，必须重启 SteamVR。
 
+> **使用完毕后请取消注册。** 驱动处于注册状态时，SteamVR 会以全虚拟模式运行——真实头显、控制器与追踪器将无法被追踪。请参阅[取消注册](#取消注册)以还原原始设置。
+
+## HMD 渲染分辨率
+
+虚拟头显默认每只眼睛以 `1920x1080` 渲染，以控制 SteamVR 合成器的负载。高级用户无需重新构建驱动即可通过覆盖两个设置项来提高分辨率。
+
+编辑全局的 `steamvr.vrsettings`（位于 `<Steam>\config\steamvr.vrsettings`），在其中新增或扩展 `driver_anyadance` 小节：
+
+```json
+"driver_anyadance": {
+    "headset_render_width": 3840,
+    "headset_render_height": 2160
+}
+```
+
+然后重启 SteamVR（`.\scripts\restart_steamvr.ps1`）。`3840x2160` 即 4K；请保持 `16:9` 比例（例如 `2560x1440` 或 `3840x2160`），以免画面被拉伸。分辨率越高，GPU 渲染时间大致按缩放倍数的平方增长——4K 约为 1080p 的四倍。
+
+在 `steamvr.vrsettings` 中设置的值会覆盖驱动默认值（`resources\settings\default.vrsettings`）。同一小节还提供 `headset_window_width`、`headset_window_height`、`headset_window_eye_mode` 与 `headset_window_preserve_aspect`，用于配置桌面镜像窗口；详见 [docs/device-model.md](docs/device-model.md)。
+
 ## 运行测试界面
 
 ```powershell
@@ -131,6 +150,10 @@ X     按住时右扳机
 
 ## MMD 舞蹈
 
+<p>
+  <img src="docs/images/anya_dance.gif" alt="AnyaDance MMD 舞蹈播放" width="25%"><img src="docs/images/anya_dance.gif" alt="AnyaDance MMD 舞蹈播放" width="25%"><img src="docs/images/anya_dance.gif" alt="AnyaDance MMD 舞蹈播放" width="25%"><img src="docs/images/anya_dance.gif" alt="AnyaDance MMD 舞蹈播放" width="25%">
+</p>
+
 **舞蹈 (MMD)** 按钮会把 MMD 舞蹈在内存中实时播放到六个虚拟设备上。Blender + MMD Tools 会基于你提供的 PMX/PMD 模型解算 `.vmd` 动作，工具再把解算结果重映射到固定设备骨架并以 60 Hz 推送。自定义安装路径可在 **高级** 中指定；工具会记住这些路径。
 
 需要：[Blender](https://www.blender.org/) 与 [MMD Tools](https://github.com/MMD-Blender/blender_mmd_tools) 插件，以及你自己的模型。MMD 模型属于第三方作品并带有各自授权。详见 [docs/mmd-dance.md](docs/mmd-dance.md)。
@@ -166,8 +189,26 @@ X     按住时右扳机
 .\scripts\restart_steamvr.ps1
 ```
 
+**取消注册是恢复正常 SteamVR 状态的必要操作。** 在 AnyaDance 驱动处于注册状态期间，SteamVR 会将六个虚拟设备视为真实硬件，这将导致真实头显、控制器和追踪器无法被识别——在驱动移除之前，你的物理 VR 设备将无法正常工作。
+
+`unregister_driver.ps1` 会移除驱动条目，并将 `steamvr.vrsettings` 从注册时创建的备份中还原。SteamVR 重启后，真实设备即可恢复正常追踪。
+
+你也可以在工具内通过 **取消注册驱动** 按钮完成该操作，它会触发相同的脚本并自动提示重启 SteamVR。
+
+## 卸载
+
+1. **取消注册驱动**（见上方[取消注册](#取消注册)），并重启 SteamVR 以恢复真实设备。
+2. 删除你解压的 AnyaDance 文件夹。
+3. 可选：删除工具在 AppData 中保存的状态：
+   - `%LOCALAPPDATA%\AnyaDance\tool_state.ini` — 保存的偏好设置（窗口大小、路径、窗口置顶等）
+   - `%LOCALAPPDATA%\AnyaDance\steamvr.vrsettings.backup` — 注册时备份的 SteamVR 设置文件
+
+如果在删除文件夹之前跳过了第 1 步，SteamVR 仍会引用（现已不存在的）驱动路径。可从脚本文件夹的副本运行 `unregister_driver.ps1`，或手动在 `%LOCALAPPDATA%\openvr\openvrpaths.vrpath` 中移除该驱动条目。
+
 ## 许可证
 
 AnyaDance 是开源软件，依据 Apache License 2.0 授权。
 
 依据 Apache License 2.0 授权。参见 [LICENSE](LICENSE) 与署名文件 [NOTICE](NOTICE)。再分发时必须保留 NOTICE 内容并标注修改过的文件。捆绑的第三方组件保留各自的许可证；详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+![Project Anya banner](driver/resources/images/anya_banner.png)

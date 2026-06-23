@@ -43,4 +43,12 @@ void NeutralizeControllerInputs(FrameState& frame);
 bool ClampFrameY(FrameState& frame);
 PoseSample ToPoseSample(const FrameState& frame, DeviceIndex index);
 
+// Copy the dance's finger bends (where present) onto the live controllers and
+// into the persistent finger store, leaving controllers the dance does not drive
+// untouched. Keeping the store in sync makes it the single source of truth that
+// Save Pose and paused streaming read, instead of a stale manual-scroll value.
+void ApplyDanceFingerBends(const std::array<ControllerState, 2>& danceControllers,
+                           std::array<ControllerState, 2>& controllers,
+                           std::array<FingerBends, 2>& fingerStore);
+
 } // namespace anyadance

@@ -521,6 +521,36 @@ void TestFingerBend() {
     }
 }
 
+void TestApplyDanceFingerBends() {
+    // A dance that drives the left hand pushes its fingers onto both the live
+    // controllers and the persistent store, so Save Pose (which reads the store)
+    // captures the dance's hands instead of a stale wheel value. The right hand,
+    // which the dance does not drive, keeps its existing state untouched.
+    std::array<ControllerState, 2> dance{};
+    dance[0].has_finger_bends = true;
+    dance[0].finger_bends = {0.1f, 0.2f, 0.3f, 0.4f, 0.5f};
+
+    std::array<ControllerState, 2> controllers{};
+    controllers[1].has_finger_bends = true;
+    controllers[1].finger_bends = {0.6f, 0.6f, 0.6f, 0.6f, 0.6f};
+
+    std::array<FingerBends, 2> store{};
+    store[0] = {0.9f, 0.9f, 0.9f, 0.9f, 0.9f};  // stale manual-scroll value
+
+    ApplyDanceFingerBends(dance, controllers, store);
+
+    EXPECT_TRUE(controllers[0].has_finger_bends);
+    EXPECT_NEAR(controllers[0].finger_bends.thumb, 0.1f, 0.0001f);
+    EXPECT_NEAR(controllers[0].finger_bends.pinky, 0.5f, 0.0001f);
+    EXPECT_NEAR(store[0].thumb, 0.1f, 0.0001f);  // the fix: store mirrors the dance
+    EXPECT_NEAR(store[0].pinky, 0.5f, 0.0001f);
+
+    // Undriven controller and its store slot are left as they were.
+    EXPECT_TRUE(controllers[1].has_finger_bends);
+    EXPECT_NEAR(controllers[1].finger_bends.thumb, 0.6f, 0.0001f);
+    EXPECT_NEAR(store[1].thumb, 0.0f, 0.0001f);
+}
+
 void TestLog() {
     UdpLog log;
     log.Add("Reset to T-Pose", "Sent", "payload1");
@@ -774,6 +804,7 @@ int main() {
     TestInput();
     TestManipulation();
     TestFingerBend();
+    TestApplyDanceFingerBends();
     TestLog();
     TestJson();
     TestMmdParse();

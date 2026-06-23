@@ -2,6 +2,16 @@
 
 This project is Windows-only and uses CMake plus CTest.
 
+## Using a coding agent
+
+Contributing with an AI coding agent (Claude Code, Codex, or similar) is
+recommended. The repository ships an [AGENTS.md](AGENTS.md) that gives an agent
+the project layout, build/test commands, conventions, and the squash-merge PR
+workflow up front, so an agent can build, test, and open a focused PR with
+little hand-holding. Point your agent at it and let it follow the same gate
+described below. You are still responsible for reviewing the diff and the PR
+description before submitting.
+
 Before submitting changes:
 
 ```powershell

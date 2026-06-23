@@ -1,6 +1,6 @@
 # AnyaDance
 
-![Project Anya banner](driver/resources/images/anya_banner.png)
+![AnyaDance main UI](docs/images/ui_main.png)
 
 **English** | [简体中文](README.zh-CN.md)
 
@@ -95,6 +95,25 @@ The tests cover protocol validation, safety clamping, T-pose reset math, keyboar
 
 SteamVR must be restarted after registration changes and after rebuilding the driver DLL.
 
+> **Unregister when you are done.** While the driver is registered, SteamVR runs in fully virtual mode — real headsets, controllers, and trackers will not be tracked. See [Unregister](#unregister) to restore your original settings.
+
+## HMD Render Resolution
+
+The virtual HMD renders at `1920x1080` per eye by default, which keeps the SteamVR compositor's load modest. Advanced users can raise it without rebuilding the driver by overriding two settings keys.
+
+Edit the global `steamvr.vrsettings` (at `<Steam>\config\steamvr.vrsettings`) and add or extend the `driver_anyadance` section:
+
+```json
+"driver_anyadance": {
+    "headset_render_width": 3840,
+    "headset_render_height": 2160
+}
+```
+
+Then restart SteamVR (`.\scripts\restart_steamvr.ps1`). `3840x2160` is 4K; keep a `16:9` ratio (for example `2560x1440` or `3840x2160`) so the image is not stretched. Higher resolutions cost roughly the square of the scale in GPU render time — 4K is about four times 1080p.
+
+Values set in `steamvr.vrsettings` win over the driver defaults in `resources\settings\default.vrsettings`. The same section also exposes `headset_window_width`, `headset_window_height`, `headset_window_eye_mode`, and `headset_window_preserve_aspect` for the desktop mirror window; see [docs/device-model.md](docs/device-model.md).
+
 ## Run The Test UI
 
 ```powershell
@@ -131,6 +150,10 @@ Mouse manipulation uses the six device boxes. The capture panel and boxes resize
 Dragging the empty area of the body panel acts as the right thumbstick: the press point is the stick center, and dragging deflects it within ±1 on each axis, returning to neutral on release. This is meant for navigating the right-hand quick menu (opened by holding `M`).
 
 ## MMD Dance
+
+<p>
+  <img src="docs/images/anya_dance.gif" alt="AnyaDance MMD dance playback" width="25%"><img src="docs/images/anya_dance.gif" alt="AnyaDance MMD dance playback" width="25%"><img src="docs/images/anya_dance.gif" alt="AnyaDance MMD dance playback" width="25%"><img src="docs/images/anya_dance.gif" alt="AnyaDance MMD dance playback" width="25%">
+</p>
 
 The **Dance (MMD)** button plays an MMD dance on the six virtual devices live in
 memory. Blender + MMD Tools solves the `.vmd` motion against a model you supply
@@ -184,6 +207,22 @@ See [docs/protocol.md](docs/protocol.md) for the full protocol.
 .\scripts\restart_steamvr.ps1
 ```
 
+**Unregistering is required to restore normal SteamVR operation.** While the AnyaDance driver is registered, SteamVR treats all six virtual devices as real hardware. This blocks real headsets, controllers, and trackers from being recognised — your physical VR devices will not work until the driver is removed.
+
+`unregister_driver.ps1` removes the driver entry and restores `steamvr.vrsettings` from the backup that was made during registration. After SteamVR restarts your real devices will track normally again.
+
+You can also unregister from within the tool using the **Unregister Driver** button, which triggers the same script and prompts to restart SteamVR automatically.
+
+## Uninstall
+
+1. **Unregister the driver** (see [Unregister](#unregister) above) and restart SteamVR so real devices are restored.
+2. Delete the AnyaDance folder you extracted.
+3. Optionally delete the tool's saved state from AppData:
+   - `%LOCALAPPDATA%\AnyaDance\tool_state.ini` — saved preferences (window size, paths, always-on-top, etc.)
+   - `%LOCALAPPDATA%\AnyaDance\steamvr.vrsettings.backup` — the SteamVR settings backup made during registration
+
+If you skip step 1 before deleting the folder, SteamVR will still reference the (now missing) driver path. Run `unregister_driver.ps1` from a copy of the scripts folder, or remove the driver entry manually from `%LOCALAPPDATA%\openvr\openvrpaths.vrpath`.
+
 ## License
 
 AnyaDance is open source, licensed under the Apache License, Version 2.0.
@@ -192,3 +231,5 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) and the
 [NOTICE](NOTICE) attribution file. Redistributions must preserve the NOTICE
 contents and mark any modified files. Bundled third-party components keep their
 own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+![Project Anya banner](driver/resources/images/anya_banner.png)
