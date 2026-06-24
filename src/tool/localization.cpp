@@ -33,7 +33,7 @@ const char* const kStrings[kTextCount][kLanguageCount] = {
     /* Capture               */ {"Captured", u8"捕获中"},
     /* HmdHelp               */ {"HMD: rotate; LMB+RMB to move up/down", u8"头显：旋转；左键+右键上下移动"},
     /* KeyLine1              */ {"WASD Move | Q/E Turn | Space Jump | M Menu | V Voice", u8"WASD 移动 | Q/E 转向 | Space 跳跃 | M 菜单 | V 语音"},
-    /* KeyLine2              */ {"Z Left Trigger | X Right Trigger | Wheel Fingers (hold 1-0 for one)", u8"Z 左扳机 | X 右扳机 | 滚轮开合手指（按住 1-0 控制单指）"},
+    /* KeyLine2              */ {"Z Left Trigger | X Right Trigger | Wheel Fingers (hold 1-0 for one) | Full fist = grip", u8"Z 左扳机 | X 右扳机 | 滚轮开合手指（按住 1-0 控制单指）| 握拳=抓取"},
     /* MouseHelp             */ {"On a box: LMB XY move | MMB pitch/yaw rotate | hold RMB with LMB/MMB for Z move/roll. Drag empty space = right stick (for radial menus)", u8"在方框上：左键XY移动 | 中键俯仰偏航旋转 | 同时按住右键Z移动/横滚旋转。在空白处拖拽=右摇杆（便于操作圆盘菜单）"},
     /* Mirror                */ {"Mirror", u8"对称"},
     /* FrameLabel            */ {"Move/rotate", u8"移动/旋转参考系"},

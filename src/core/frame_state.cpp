@@ -57,6 +57,21 @@ PoseSample ToPoseSample(const FrameState& frame, DeviceIndex index) {
     return sample;
 }
 
+void ApplyFingerGrip(ControllerState& controller) {
+    if (!controller.has_finger_bends) {
+        return;
+    }
+    // Near-full counts as a fist, so a hand curled to ~0.95+ (or a loaded pose
+    // that lands just shy of 1.0) still grabs.
+    constexpr float kFistThreshold = 0.95f;
+    const FingerBends& f = controller.finger_bends;
+    const bool fist = f.thumb >= kFistThreshold && f.index >= kFistThreshold &&
+                      f.middle >= kFistThreshold && f.ring >= kFistThreshold &&
+                      f.pinky >= kFistThreshold;
+    controller.grip_click = fist;
+    controller.grip_value = fist ? 1.0f : 0.0f;
+}
+
 void ApplyDanceFingerBends(const std::array<ControllerState, 2>& danceControllers,
                            std::array<ControllerState, 2>& controllers,
                            std::array<FingerBends, 2>& fingerStore) {
@@ -64,6 +79,7 @@ void ApplyDanceFingerBends(const std::array<ControllerState, 2>& danceController
         if (danceControllers[i].has_finger_bends) {
             controllers[i].has_finger_bends = true;
             controllers[i].finger_bends = danceControllers[i].finger_bends;
+            ApplyFingerGrip(controllers[i]);
             fingerStore[i] = danceControllers[i].finger_bends;
         }
     }

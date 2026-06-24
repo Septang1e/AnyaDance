@@ -43,6 +43,13 @@ void NeutralizeControllerInputs(FrameState& frame);
 bool ClampFrameY(FrameState& frame);
 PoseSample ToPoseSample(const FrameState& frame, DeviceIndex index);
 
+// Drive grip from a closed fist: when every finger on the controller is fully
+// curled (all bends >= 1.0), report grip pressed at full value; if any finger
+// drops below 1.0, grip releases. Derived from finger_bends, so it follows both
+// manual finger control and finger animation from a dance. Controllers without
+// finger data are left untouched.
+void ApplyFingerGrip(ControllerState& controller);
+
 // Copy the dance's finger bends (where present) onto the live controllers and
 // into the persistent finger store, leaving controllers the dance does not drive
 // untouched. Keeping the store in sync makes it the single source of truth that

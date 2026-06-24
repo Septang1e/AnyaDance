@@ -892,6 +892,8 @@ void ApplyFingerBend(FrameState& frame) {
     for (std::size_t i = 0; i < frame.controllers.size(); ++i) {
         frame.controllers[i].has_finger_bends = true;
         frame.controllers[i].finger_bends = g_app.fingerBends[i];
+        // A fully closed fist presses grip; releasing any finger releases it.
+        ApplyFingerGrip(frame.controllers[i]);
     }
 }
 

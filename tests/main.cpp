@@ -521,6 +521,45 @@ void TestFingerBend() {
     }
 }
 
+void TestFingerGrip() {
+    // A fully closed fist presses grip at full value.
+    ControllerState c{};
+    c.has_finger_bends = true;
+    c.finger_bends = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+    ApplyFingerGrip(c);
+    EXPECT_TRUE(c.grip_click);
+    EXPECT_NEAR(c.grip_value, 1.0f, 0.0001f);
+
+    // Near-full (>= 0.95) still counts as a fist.
+    c.finger_bends = {0.95f, 0.96f, 1.0f, 0.97f, 0.99f};
+    ApplyFingerGrip(c);
+    EXPECT_TRUE(c.grip_click);
+
+    // Dropping any single finger below the threshold releases grip.
+    c.finger_bends.index = 0.9f;
+    ApplyFingerGrip(c);
+    EXPECT_FALSE(c.grip_click);
+    EXPECT_NEAR(c.grip_value, 0.0f, 0.0001f);
+
+    // A controller with no finger data is left untouched.
+    ControllerState none{};
+    none.grip_click = true;
+    ApplyFingerGrip(none);
+    EXPECT_TRUE(none.grip_click);
+
+    // Grip is per hand: applying to one controller does not touch another.
+    std::array<ControllerState, 2> dance{};
+    dance[0].has_finger_bends = true;
+    dance[0].finger_bends = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f};  // left fist
+    dance[1].has_finger_bends = true;
+    dance[1].finger_bends = {1.0f, 1.0f, 1.0f, 0.5f, 1.0f};  // right open ring
+    std::array<ControllerState, 2> controllers{};
+    std::array<FingerBends, 2> store{};
+    ApplyDanceFingerBends(dance, controllers, store);
+    EXPECT_TRUE(controllers[0].grip_click);
+    EXPECT_FALSE(controllers[1].grip_click);
+}
+
 void TestApplyDanceFingerBends() {
     // A dance that drives the left hand pushes its fingers onto both the live
     // controllers and the persistent store, so Save Pose (which reads the store)
@@ -804,6 +843,7 @@ int main() {
     TestInput();
     TestManipulation();
     TestFingerBend();
+    TestFingerGrip();
     TestApplyDanceFingerBends();
     TestLog();
     TestJson();
