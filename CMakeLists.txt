@@ -179,6 +179,7 @@ if(ANYADANCE_BUILD_UI)
             "${CMAKE_CURRENT_SOURCE_DIR}/THIRD_PARTY_NOTICES.md"
             "${CMAKE_CURRENT_SOURCE_DIR}/DISCLAIMER.md"
             "${CMAKE_CURRENT_SOURCE_DIR}/README.md"
+            "${CMAKE_CURRENT_SOURCE_DIR}/README.zh-CN.md"
             "${ANYADANCE_OUTPUT_DRIVER_ROOT}/"
         COMMENT "Staging UI support files"
     )

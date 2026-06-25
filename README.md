@@ -64,6 +64,8 @@ build\out\anyadance\resources\...
 build\out\anyadance\LICENSE
 build\out\anyadance\NOTICE
 build\out\anyadance\THIRD_PARTY_NOTICES.md
+build\out\anyadance\README.md
+build\out\anyadance\README.zh-CN.md
 build\out\AnyaDance.zip
 ```
 
