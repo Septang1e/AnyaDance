@@ -167,13 +167,20 @@ if(ANYADANCE_BUILD_UI)
     )
     target_include_directories(AnyaDanceUI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
     target_link_libraries(AnyaDanceUI PRIVATE anyadance_core imgui d3d11 dxgi d3dcompiler windowscodecs ole32 shell32 comdlg32 Ws2_32)
-    # Ship the Blender MMD solve script beside the UI so the Dance dialog can
-    # find it at <exe dir>\scripts\blender_export_mmd.py.
+    # Ship runtime support files beside the UI: the Dance dialog needs the
+    # Blender solve script, and binary redistribution needs the license/notices.
     add_custom_command(TARGET AnyaDanceUI POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_CURRENT_SOURCE_DIR}/scripts/blender_export_mmd.py"
             "${ANYADANCE_OUTPUT_DRIVER_ROOT}/scripts/blender_export_mmd.py"
-        COMMENT "Staging Blender MMD export script beside the UI"
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE"
+            "${CMAKE_CURRENT_SOURCE_DIR}/NOTICE"
+            "${CMAKE_CURRENT_SOURCE_DIR}/THIRD_PARTY_NOTICES.md"
+            "${CMAKE_CURRENT_SOURCE_DIR}/DISCLAIMER.md"
+            "${CMAKE_CURRENT_SOURCE_DIR}/README.md"
+            "${ANYADANCE_OUTPUT_DRIVER_ROOT}/"
+        COMMENT "Staging UI support files"
     )
     # The UI ships inside the driver root so the registered folder and the run
     # folder are one and the same: exe + driver.vrdrivermanifest + bin/win64/dll.

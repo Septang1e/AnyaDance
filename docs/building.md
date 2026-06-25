@@ -39,10 +39,14 @@ build/out/anyadance/bin/win64/driver_anyadance.dll
 build/out/anyadance/resources/input/anyadance_controller_profile.json
 build/out/anyadance/resources/input/anyadance_hmd_profile.json
 build/out/anyadance/resources/settings/default.vrsettings
+build/out/anyadance/LICENSE
+build/out/anyadance/NOTICE
+build/out/anyadance/THIRD_PARTY_NOTICES.md
 ```
 
-the UI builds into the driver folder, so `build/out/anyadance/` is one
-self-contained bundle: the exe registers its own folder as the SteamVR driver.
+The UI builds into the driver folder, so `build/out/anyadance/` is one
+self-contained bundle with the license/notices: the exe registers its own folder
+as the SteamVR driver.
 
 ## Tests
 

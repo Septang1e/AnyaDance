@@ -61,11 +61,14 @@ build\out\anyadance\AnyaDance.exe
 build\out\anyadance\driver.vrdrivermanifest
 build\out\anyadance\bin\win64\driver_anyadance.dll
 build\out\anyadance\resources\...
+build\out\anyadance\LICENSE
+build\out\anyadance\NOTICE
+build\out\anyadance\THIRD_PARTY_NOTICES.md
 build\out\AnyaDance.zip
 ```
 
-the UI ships inside the driver folder, so `build\out\anyadance\` is one
-self-contained, shippable bundle, and the build also zips it into
+The UI ships inside the driver folder, so `build\out\anyadance\` is one
+self-contained, shippable bundle with the license/notices, and the build also zips it into
 `build\out\AnyaDance.zip` to hand to others directly. The exe registers its own folder as the SteamVR
 driver, so OpenVR finds `driver.vrdrivermanifest` and `bin\win64\driver_anyadance.dll`
 beside it. OpenVR loads the driver DLL from `bin\win64\`, with the manifest at
