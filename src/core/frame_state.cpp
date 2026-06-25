@@ -28,35 +28,6 @@ bool ClampFrameY(FrameState& frame) {
     return anyClamped;
 }
 
-PoseSample ToPoseSample(const FrameState& frame, DeviceIndex index) {
-    const DeviceState& device = frame.devices[DeviceSlot(index)];
-    PoseSample sample{};
-    sample.valid = device.valid;
-    sample.connected = device.connected;
-    sample.position = {device.position.x, device.position.y, device.position.z};
-    sample.rotation_xyzw = {device.rotation.x, device.rotation.y, device.rotation.z, device.rotation.w};
-    sample.y_clamped = device.y_clamped;
-    const int controllerSlot = ControllerSlot(index);
-    if (controllerSlot >= 0) {
-        const ControllerState& input = frame.controllers[static_cast<std::size_t>(controllerSlot)];
-        sample.trigger_click = input.trigger_click;
-        sample.trigger_value = input.trigger_value;
-        sample.menu_click = input.menu_click;
-        sample.system_click = input.system_click;
-        sample.a_click = input.a_click;
-        sample.b_click = input.b_click;
-        sample.grip_click = input.grip_click;
-        sample.grip_value = input.grip_value;
-        sample.joystick_x = input.joystick_x;
-        sample.joystick_y = input.joystick_y;
-        sample.trackpad_x = input.trackpad_x;
-        sample.trackpad_y = input.trackpad_y;
-        sample.has_finger_bends = input.has_finger_bends;
-        sample.finger_bends = input.finger_bends;
-    }
-    return sample;
-}
-
 void ApplyFingerGrip(ControllerState& controller) {
     if (!controller.has_finger_bends) {
         return;

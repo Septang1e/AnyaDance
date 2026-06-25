@@ -5,14 +5,6 @@
 
 namespace anyadance {
 
-bool IsFinite(Vec3 v) {
-    return std::isfinite(v.x) && std::isfinite(v.y) && std::isfinite(v.z);
-}
-
-bool IsFinite(Quat q) {
-    return std::isfinite(q.x) && std::isfinite(q.y) && std::isfinite(q.z) && std::isfinite(q.w);
-}
-
 float LengthSquared(Quat q) {
     return q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
 }

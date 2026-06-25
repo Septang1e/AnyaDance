@@ -41,7 +41,6 @@ struct FrameState {
 FrameState MakeNeutralFrame();
 void NeutralizeControllerInputs(FrameState& frame);
 bool ClampFrameY(FrameState& frame);
-PoseSample ToPoseSample(const FrameState& frame, DeviceIndex index);
 
 // Drive grip from a closed fist: when every finger on the controller is fully
 // curled (all bends >= 1.0), report grip pressed at full value; if any finger

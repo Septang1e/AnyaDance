@@ -17,8 +17,6 @@ struct Quat {
     float w = 1.0f;
 };
 
-bool IsFinite(Vec3 v);
-bool IsFinite(Quat q);
 float LengthSquared(Quat q);
 bool NormalizeIfAcceptable(Quat& q);
 Quat Normalized(Quat q);

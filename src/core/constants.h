@@ -61,12 +61,4 @@ inline constexpr std::size_t DeviceSlot(DeviceIndex index) {
     return static_cast<std::size_t>(index);
 }
 
-inline constexpr bool IsController(DeviceIndex index) {
-    return index == DeviceIndex::LeftController || index == DeviceIndex::RightController;
-}
-
-inline constexpr int ControllerSlot(DeviceIndex index) {
-    return index == DeviceIndex::LeftController ? 0 : (index == DeviceIndex::RightController ? 1 : -1);
-}
-
 } // namespace anyadance
