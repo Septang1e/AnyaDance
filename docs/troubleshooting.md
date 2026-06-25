@@ -1,5 +1,7 @@
 # Troubleshooting
 
+**English** | [简体中文](troubleshooting.zh-CN.md)
+
 ## SteamVR Does Not See The Driver
 
 Run:
@@ -20,6 +22,12 @@ Re-run the registration script, which also applies the fully virtual settings:
 ```
 
 If a physical HMD is connected, SteamVR may reject the second virtual HMD. Disconnect the physical HMD so the virtual one can become active.
+
+## Display Is Blurry Or Unclear
+
+The virtual HMD renders at `1920x1080` per eye by default. If the image looks soft or blurry, raise the per-eye render resolution: edit the `driver_anyadance` section of `steamvr.vrsettings`, set `headset_render_width` and `headset_render_height` higher (for example `3840x2160` for 4K), and restart SteamVR. See the HMD Render Resolution section of the README and [docs/device-model.md](device-model.md).
+
+> **Note:** Raising the per-eye render resolution greatly increases GPU load. The headset renders both eyes separately (effectively two screens), so the increase applies to each eye: 4K (`3840x2160`) is about four times the pixels of 1080p, and that cost is paid for both eyes. Any aspect ratio works — the projection adapts to the configured resolution, so nothing is stretched.
 
 ## Controllers Or Trackers Do Not Move
 

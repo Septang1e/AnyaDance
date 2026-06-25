@@ -28,4 +28,11 @@ Guidelines:
 - update docs when behavior changes
 - add focused tests for protocol, safety, stale-device, T-pose, input, manipulation, and log behavior
 
+## Licensing of contributions
+
+Unless you state otherwise, contributions you submit are accepted under the
+project's [Apache License 2.0](LICENSE) (inbound = outbound). You retain the
+copyright to your contribution; no separate contributor license agreement is
+required.
+
 By participating in this project you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).

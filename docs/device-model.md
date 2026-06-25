@@ -1,5 +1,7 @@
 # Device Model
 
+**English** | [简体中文](device-model.zh-CN.md)
+
 ## Public Identifiers
 
 ```text
@@ -65,8 +67,9 @@ driver, through `headset_window_width`, `headset_window_height`,
 `headset_render_width`, `headset_render_height`, `headset_window_eye_mode`, and
 `headset_window_preserve_aspect` in the `driver_anyadance` settings section.
 Advanced users can raise the render target to 4K (`3840x2160`) at the cost of
-roughly four times the compositor render load; keeping the same `16:9` aspect
-avoids stretching.
+roughly four times the compositor render load. Any aspect ratio works — the
+projection adapts to the configured render resolution, so the image is not
+stretched.
 
 ## Tool Mirroring
 

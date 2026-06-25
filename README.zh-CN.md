@@ -23,6 +23,8 @@ AnyaDance 作为 **Project Anya**（由 Pipira 开发的更大型项目）的一
 
 将虚拟设备或伪造的追踪数据输入正在运行的在线游戏，可能违反该游戏的服务条款，并可能被其反作弊系统检测到，从而导致你的账号被封禁或永久封停。
 
+注册驱动会更改你的 SteamVR 配置：它会将 SteamVR 切换为全虚拟模式并写入 `steamvr.vrsettings`，因此在驱动处于注册状态期间，你的真实头显、控制器与追踪器将无法被追踪（注册时会创建备份，取消注册会将其还原）。虚拟头显还会通过 SteamVR 合成器持续渲染左右两只眼睛，会占用额外的 GPU 与 CPU 资源；提高渲染分辨率会进一步加大该负载。
+
 你需自行承担使用本软件的全部风险。本软件按“原样”提供，不附带任何形式的担保；对于因使用或滥用造成的任何后果（包括账号封禁或失去访问权限），作者概不负责，亦不承担任何责任。你同意使作者免于因你的使用而产生的任何索赔。
 
 本项目与 VRChat、Valve、Steam 或 SteamVR 无任何关联，也未获其认可。所有商标归各自所有者所有。
@@ -109,9 +111,9 @@ ctest --test-dir build -C Release --output-on-failure
 }
 ```
 
-然后重启 SteamVR（`.\scripts\restart_steamvr.ps1`）。`3840x2160` 即 4K；请保持 `16:9` 比例（例如 `2560x1440` 或 `3840x2160`），以免画面被拉伸。分辨率越高，GPU 渲染时间大致按缩放倍数的平方增长——4K 约为 1080p 的四倍。
+然后重启 SteamVR（`.\scripts\restart_steamvr.ps1`）。`3840x2160` 即 4K。宽高比可以自由选择（例如与你的显示器保持一致）：投影会按所设的渲染分辨率自动适配，不会被拉伸。分辨率越高，GPU 渲染时间大致按缩放倍数的平方增长——4K 约为 1080p 的四倍。
 
-在 `steamvr.vrsettings` 中设置的值会覆盖驱动默认值（`resources\settings\default.vrsettings`）。同一小节还提供 `headset_window_width`、`headset_window_height`、`headset_window_eye_mode` 与 `headset_window_preserve_aspect`，用于配置桌面镜像窗口；详见 [docs/device-model.md](docs/device-model.md)。
+在 `steamvr.vrsettings` 中设置的值会覆盖驱动默认值（`resources\settings\default.vrsettings`）。同一小节还提供 `headset_window_width`、`headset_window_height`、`headset_window_eye_mode` 与 `headset_window_preserve_aspect`，用于配置桌面镜像窗口；详见 [docs/device-model.zh-CN.md](docs/device-model.zh-CN.md)。
 
 ## 运行测试界面
 
@@ -128,7 +130,7 @@ ctest --test-dir build -C Release --output-on-failure
 - 支持悬停或固定行查看详情，并提供三种针对载荷的操作：“复制”（原始请求体）、“复制重发命令”（可直接运行的 PowerShell UDP 单行命令）以及“重新发送”（由工具通过自身套接字重发该数据报）
 - 可通过自身按钮将其所在文件夹注册/取消注册为 SteamVR 驱动并重启 SteamVR（带确认）
 - 提供“窗口置顶”复选框，可将窗口固定在其他窗口之上；该选择会在多次运行间记住
-- 可播放 MMD 舞蹈：点击 **舞蹈 (MMD)** 选择 `.vmd` 动作和 `.pmx`/`.pmd` 模型，分析后即可把舞蹈实时推送到六个设备（见 [docs/mmd-dance.md](docs/mmd-dance.md)）
+- 可播放 MMD 舞蹈：点击 **舞蹈 (MMD)** 选择 `.vmd` 动作和 `.pmx`/`.pmd` 模型，分析后即可把舞蹈实时推送到六个设备（见 [docs/mmd-dance.zh-CN.md](docs/mmd-dance.zh-CN.md)）
 - 可将姿势与舞蹈保存为 `.nya` 片段：主窗口的 **保存姿势** / **加载姿势** 用于捕获并恢复当前姿势；舞蹈对话框可 **保存 .nya**（已分析的舞蹈）并 **加载 .nya** 直接重新播放，无需再次解算
 - 通过 `src/tool/localization.*` 与本地化表支持英文与简体中文界面
 
@@ -156,7 +158,7 @@ X     按住时右扳机
 
 **舞蹈 (MMD)** 按钮会把 MMD 舞蹈在内存中实时播放到六个虚拟设备上。Blender + MMD Tools 会基于你提供的 PMX/PMD 模型解算 `.vmd` 动作，工具再把解算结果重映射到固定设备骨架并以 60 Hz 推送。自定义安装路径可在 **高级** 中指定；工具会记住这些路径。
 
-需要：[Blender](https://www.blender.org/) 与 [MMD Tools](https://github.com/MMD-Blender/blender_mmd_tools) 插件，以及你自己的模型。MMD 模型属于第三方作品并带有各自授权。详见 [docs/mmd-dance.md](docs/mmd-dance.md)。
+需要：[Blender](https://www.blender.org/) 与 [MMD Tools](https://github.com/MMD-Blender/blender_mmd_tools) 插件，以及你自己的模型。MMD 模型属于第三方作品并带有各自授权。详见 [docs/mmd-dance.zh-CN.md](docs/mmd-dance.zh-CN.md)。
 
 舞蹈分析完成后，**保存 .nya** 会把结果写入片段文件；**加载 .nya** 读取后即可立即播放——加载会跳过 Blender 解算与重映射，因此已保存的舞蹈可瞬间播放。
 
@@ -180,7 +182,7 @@ X     按住时右扳机
 - 四元数顺序为 XYZW
 - 可识别的设备 ID 为 `hmd`、`left_controller`、`right_controller`、`hip`、`left_foot`、`right_foot`
 
-完整协议见 [docs/protocol.md](docs/protocol.md)。
+完整协议见 [docs/protocol.zh-CN.md](docs/protocol.zh-CN.md)。
 
 ## 取消注册
 

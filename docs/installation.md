@@ -1,5 +1,7 @@
 # Installation
 
+**English** | [简体中文](installation.zh-CN.md)
+
 ## Register The Driver
 
 Build first, then register the staged driver folder:

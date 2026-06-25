@@ -93,13 +93,20 @@ if(ANYADANCE_BUILD_DRIVER)
         src/driver/virtual_device.cpp
     )
     target_include_directories(driver_anyadance PRIVATE
-        "${OPENVR_ROOT}/headers"
         "${CMAKE_CURRENT_SOURCE_DIR}/src"
         "${CMAKE_CURRENT_SOURCE_DIR}/src/driver"
     )
+    # OpenVR is a vendored third-party SDK. Mark its headers as external/system so
+    # our strict warning bar is not applied to Valve's own inline stubs (C4100 in
+    # openvr_driver.h), while our driver sources keep full /W4 enforcement.
+    target_include_directories(driver_anyadance SYSTEM PRIVATE
+        "${OPENVR_ROOT}/headers"
+    )
     target_compile_definitions(driver_anyadance PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
     if(MSVC)
-        target_compile_options(driver_anyadance PRIVATE /W4 /permissive-)
+        # /external:W0 sets external (system) headers to warning level 0; the
+        # SYSTEM include above maps to /external:I on MSVC.
+        target_compile_options(driver_anyadance PRIVATE /W4 /permissive- /external:W0)
     endif()
     target_link_libraries(driver_anyadance PRIVATE anyadance_core "${OPENVR_ROOT}/lib/win64/openvr_api.lib" Ws2_32)
     set_target_properties(driver_anyadance PROPERTIES

@@ -1,28 +1,28 @@
-# Building
+# 构建
 
-**English** | [简体中文](building.zh-CN.md)
+[English](building.md) | **简体中文**
 
-## Prerequisites
+## 前置条件
 
-- Windows 10 or newer
-- Visual Studio 2022 or Build Tools with Desktop development with C++
-- CMake 3.22 or newer
-- SteamVR for runtime testing
+- Windows 10 或更高版本
+- Visual Studio 2022，或带有“使用 C++ 的桌面开发”工作负载的生成工具
+- CMake 3.22 或更高版本
+- 用于运行时测试的 SteamVR
 
-## Default Build
+## 默认构建
 
 ```powershell
 .\scripts\build_driver.ps1
 ```
 
-The first default build downloads pinned source archives:
+首次默认构建会下载固定版本的源码归档：
 
 - Valve OpenVR SDK `v2.2.3`
 - Dear ImGui `v1.90.9`
 
-## Local Dependencies
+## 本地依赖
 
-Passing a dependency root uses that checkout directly:
+传入依赖根路径会直接使用该检出：
 
 ```powershell
 .\scripts\build_driver.ps1 `
@@ -30,7 +30,7 @@ Passing a dependency root uses that checkout directly:
   -ImguiRoot F:\deps\imgui
 ```
 
-## Build Outputs
+## 构建产物
 
 ```text
 build/out/anyadance/AnyaDance.exe
@@ -41,16 +41,15 @@ build/out/anyadance/resources/input/anyadance_hmd_profile.json
 build/out/anyadance/resources/settings/default.vrsettings
 ```
 
-The tool builds into the driver folder, so `build/out/anyadance/` is one
-self-contained bundle: the exe registers its own folder as the SteamVR driver.
+工具会构建进驱动文件夹，因此 `build/out/anyadance/` 是一个自包含的捆绑包：exe 会把自身所在的文件夹注册为 SteamVR 驱动。
 
-## Tests
+## 测试
 
 ```powershell
 ctest --test-dir build -C Release --output-on-failure
 ```
 
-For a dependency-free test-only build:
+仅构建测试、无需依赖：
 
 ```powershell
 cmake -S . -B build-tests -DANYADANCE_BUILD_DRIVER=OFF -DANYADANCE_BUILD_TOOL=OFF

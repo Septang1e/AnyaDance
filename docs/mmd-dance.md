@@ -1,5 +1,7 @@
 # MMD Dance
 
+**English** | [简体中文](mmd-dance.zh-CN.md)
+
 The companion tool can play an MMD dance (a `.vmd` motion) on the six virtual
 devices live in memory. Blender + MMD Tools does the accurate FK/IK solve against
 a real model; the tool does a small remapping onto the hardcoded rig and streams
@@ -42,7 +44,7 @@ finger curls. Output is in the same convention the driver uses: right-handed,
 ## The simplified remap
 
 Because the rig is hardcoded and turning is done with the joystick, the remap is
-deliberately small (`src/core/mmd_retarget.cpp`):
+correspondingly small (`src/core/mmd_retarget.cpp`):
 
 - **Turn → joystick.** The remap keeps world steering as controller input. You
   steer the avatar in-world with the same `Q`/`E` controls used by normal pose

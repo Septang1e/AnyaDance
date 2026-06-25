@@ -23,6 +23,8 @@ This software is provided for legitimate, authorized testing and development onl
 
 Feeding virtual devices or spoofed tracking into a live online game may violate that game's Terms of Service and can be detected by its anti-cheat system, which may result in the suspension or permanent ban of your account.
 
+Registering the driver changes your SteamVR configuration: it puts SteamVR into a fully virtual mode and writes to `steamvr.vrsettings`, so while the driver is registered your real headset, controllers, and trackers will not be tracked (a backup is made, and unregistering restores it). The virtual HMD also continuously renders both eyes through the SteamVR compositor, which consumes additional GPU and CPU; raising the render resolution increases that load further.
+
 You use this software entirely at your own risk. It is provided "as is" without warranty of any kind, and the authors accept no responsibility or liability for any consequences of use or misuse, including account bans or loss of access. You agree to hold the authors harmless from any claim arising out of your use.
 
 This project is not affiliated with or endorsed by VRChat, Valve, Steam, or SteamVR. All trademarks belong to their respective owners.
@@ -110,7 +112,7 @@ Edit the global `steamvr.vrsettings` (at `<Steam>\config\steamvr.vrsettings`) an
 }
 ```
 
-Then restart SteamVR (`.\scripts\restart_steamvr.ps1`). `3840x2160` is 4K; keep a `16:9` ratio (for example `2560x1440` or `3840x2160`) so the image is not stretched. Higher resolutions cost roughly the square of the scale in GPU render time — 4K is about four times 1080p.
+Then restart SteamVR (`.\scripts\restart_steamvr.ps1`). `3840x2160` is 4K. Any aspect ratio works (for example, match your monitor's) — the projection adapts to the configured render resolution, so the image is not stretched. Higher resolutions cost roughly the square of the scale in GPU render time — 4K is about four times 1080p.
 
 Values set in `steamvr.vrsettings` win over the driver defaults in `resources\settings\default.vrsettings`. The same section also exposes `headset_window_width`, `headset_window_height`, `headset_window_eye_mode`, and `headset_window_preserve_aspect` for the desktop mirror window; see [docs/device-model.md](docs/device-model.md).
 

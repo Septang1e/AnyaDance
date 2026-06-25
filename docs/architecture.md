@@ -1,5 +1,7 @@
 # Architecture
 
+**English** | [简体中文](architecture.zh-CN.md)
+
 AnyaDance has three runtime parts:
 
 1. `anyadance_core`: dependency-free C++17 logic shared by the driver, test UI, and tests.

@@ -556,9 +556,10 @@ struct VirtualDevice::DisplayComponent final : public IVRDisplayComponent {
     }
 
     void GetProjectionRaw(EVREye /*eEye*/, float* pfLeft, float* pfRight, float* pfTop, float* pfBottom) override {
-        // Bounds are tangents of the half-FOV angles. The render target is 16:9,
-        // so the horizontal extent must be widened by the aspect ratio; a square
-        // (+/-1) frustum into a 16:9 target stretches the image horizontally.
+        // Bounds are tangents of the half-FOV angles. The horizontal extent is
+        // widened by the render target's aspect ratio so pixels stay square at any
+        // configured resolution; a square (+/-1) frustum into a non-square target
+        // would stretch the image horizontally.
         const float aspect = static_cast<float>(m_settings.renderWidth) / static_cast<float>(m_settings.renderHeight);
         *pfLeft = -aspect;
         *pfRight = aspect;
