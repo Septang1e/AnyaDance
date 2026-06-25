@@ -61,6 +61,13 @@ build\out\anyadance\AnyaDance.exe
 build\out\anyadance\driver.vrdrivermanifest
 build\out\anyadance\bin\win64\driver_anyadance.dll
 build\out\anyadance\resources\...
+build\out\anyadance\LICENSE
+build\out\anyadance\NOTICE
+build\out\anyadance\THIRD_PARTY_NOTICES.md
+build\out\anyadance\DISCLAIMER.md
+build\out\anyadance\TRADEMARKS.md
+build\out\anyadance\README.md
+build\out\anyadance\README.zh-CN.md
 build\out\AnyaDance.zip
 ```
 
@@ -213,5 +220,7 @@ X     按住时右扳机
 AnyaDance 是开源软件，依据 Apache License 2.0 授权。
 
 依据 Apache License 2.0 授权。参见 [LICENSE](LICENSE) 与署名文件 [NOTICE](NOTICE)。再分发时必须保留 NOTICE 内容并标注修改过的文件。捆绑的第三方组件保留各自的许可证；详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+
+AnyaDance 与 Project Anya 的名称、标识和品牌使用说明见 [TRADEMARKS.md](TRADEMARKS.md)。
 
 ![Project Anya banner](driver/resources/images/anya_banner.png)

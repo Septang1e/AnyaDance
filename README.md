@@ -64,6 +64,8 @@ build\out\anyadance\resources\...
 build\out\anyadance\LICENSE
 build\out\anyadance\NOTICE
 build\out\anyadance\THIRD_PARTY_NOTICES.md
+build\out\anyadance\DISCLAIMER.md
+build\out\anyadance\TRADEMARKS.md
 build\out\anyadance\README.md
 build\out\anyadance\README.zh-CN.md
 build\out\AnyaDance.zip
@@ -239,5 +241,8 @@ Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) and the
 [NOTICE](NOTICE) attribution file. Redistributions must preserve the NOTICE
 contents and mark any modified files. Bundled third-party components keep their
 own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+See [TRADEMARKS.md](TRADEMARKS.md) for the AnyaDance and Project Anya branding
+notice.
 
 ![Project Anya banner](driver/resources/images/anya_banner.png)

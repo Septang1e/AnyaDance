@@ -84,8 +84,11 @@ a root turns off fetching for that dependency.
   `knuckles`, and OpenVR input paths.
 - Only fully-virtual mode is supported (the virtual HMD is the active HMD); there
   is no physical-HMD mode.
-- The HMD reports pose only (no inputs) and is kept alive when packets go stale.
-  Controllers and trackers report lost tracking after ~250 ms (`kPoseFreshTimeout`).
+- All six devices start connected and valid at neutral poses. Accepted packets
+  update the latest pose and controller inputs. If packets stop, SteamVR
+  continues seeing each device connected, valid, and `TrackingResult_Running_OK`
+  at the last accepted pose. The HMD reports pose only, and is the active
+  virtual HMD in fully virtual mode.
 - All devices set `Prop_IgnoreMotionForStandby_Bool` so SteamVR does not idle a
   held-still virtual device into standby/powersave.
 - All device Y is clamped to `2.0 m` (`kMaxDeviceY`) — in the UI before sending

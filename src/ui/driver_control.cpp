@@ -242,6 +242,29 @@ DriverActionResult RegisterDriver() {
             return {false, DriverStatus::ConfigWriteFailed, {}};
         }
 
+        const fs::path settingsPath = ResolveSettingsPath(*pathsJson);
+        const fs::path backupPath = BackupPath();
+        std::error_code ec;
+        const bool settingsExists = fs::exists(settingsPath, ec);
+        if (ec) {
+            return {false, DriverStatus::ConfigWriteFailed, {}};
+        }
+        ec.clear();
+        const bool backupExists = fs::exists(backupPath, ec);
+        if (ec) {
+            return {false, DriverStatus::ConfigWriteFailed, {}};
+        }
+        if (settingsExists && !backupExists) {
+            fs::create_directories(backupPath.parent_path(), ec);
+            if (ec) {
+                return {false, DriverStatus::ConfigWriteFailed, {}};
+            }
+            ec.clear();
+            if (!fs::copy_file(settingsPath, backupPath, fs::copy_options::none, ec) || ec) {
+                return {false, DriverStatus::ConfigWriteFailed, {}};
+            }
+        }
+
         const std::string driverUtf8 = PathToUtf8(driverRoot);
         Value drivers = Value::Array();
         if (const Value* existing = pathsJson->Find("external_drivers"); existing && existing->IsArray()) {
@@ -260,14 +283,6 @@ DriverActionResult RegisterDriver() {
         pathsJson->Set("external_drivers", drivers);
         if (!WriteTextFile(pathsFile, anyadance::json::Serialize(*pathsJson))) {
             return {false, DriverStatus::ConfigWriteFailed, {}};
-        }
-
-        const fs::path settingsPath = ResolveSettingsPath(*pathsJson);
-        const fs::path backupPath = BackupPath();
-        std::error_code ec;
-        fs::create_directories(backupPath.parent_path(), ec);
-        if (fs::exists(settingsPath) && !fs::exists(backupPath)) {
-            fs::copy_file(settingsPath, backupPath, ec);
         }
 
         Value settings = Value::Object();
