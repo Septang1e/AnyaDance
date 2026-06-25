@@ -180,9 +180,30 @@ if(ANYADANCE_BUILD_TOOL)
 endif()
 
 if(ANYADANCE_BUILD_TESTS AND BUILD_TESTING)
-    add_executable(anyadance_tests tests/main.cpp)
+    # One test translation unit per core module, sharing the tiny harness in
+    # tests/test_framework.*. Add a case by creating tests/test_<module>.cpp,
+    # declaring it in tests/tests.h, calling it from tests/main.cpp, and listing
+    # it here.
+    add_executable(anyadance_tests
+        tests/main.cpp
+        tests/test_framework.cpp
+        tests/test_math3d.cpp
+        tests/test_protocol.cpp
+        tests/test_frame_state.cpp
+        tests/test_tpose.cpp
+        tests/test_input.cpp
+        tests/test_manipulation.cpp
+        tests/test_finger.cpp
+        tests/test_udp_log.cpp
+        tests/test_json.cpp
+        tests/test_mmd.cpp
+        tests/test_nya.cpp
+    )
     target_link_libraries(anyadance_tests PRIVATE anyadance_core)
-    target_include_directories(anyadance_tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_include_directories(anyadance_tests PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/src"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests"
+    )
     add_test(NAME anyadance_tests COMMAND anyadance_tests)
 endif()
 
