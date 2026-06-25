@@ -1,4 +1,4 @@
-#include "tool/driver_control.h"
+#include "ui/driver_control.h"
 
 #include "core/json.h"
 
@@ -22,7 +22,7 @@
 #include <string>
 #include <system_error>
 
-namespace anyadance::tool {
+namespace anyadance::ui {
 namespace {
 
 namespace fs = std::filesystem;
@@ -352,4 +352,4 @@ DriverActionResult RestartSteamVR() {
     return {false, DriverStatus::RestartFailed, {}};
 }
 
-} // namespace anyadance::tool
+} // namespace anyadance::ui

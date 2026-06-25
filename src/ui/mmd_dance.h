@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace anyadance::tool {
+namespace anyadance::ui {
 
 // Parameters for one MMD dance export. Paths are UTF-8; the few that are optional
 // are auto-detected when left empty.
@@ -50,4 +50,4 @@ bool WriteFileUtf8(const std::string& utf8Path, const std::string& contents);
 // worker thread so the UI keeps rendering while Blender solves.
 MmdExportResult RunMmdExport(const MmdDanceConfig& config);
 
-} // namespace anyadance::tool
+} // namespace anyadance::ui

@@ -4,7 +4,7 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-AnyaDance is a Windows toolkit for driving and animating a VRChat avatar's full body — pose it by hand, drive it live, or play an MMD dance on it. At its core is a SteamVR/OpenVR virtual-device driver plus a companion tool (`AnyaDance.exe`) that streams to it. The driver exposes six virtual devices for VRChat full-body testing:
+AnyaDance is a Windows toolkit for driving and animating a VRChat avatar's full body — pose it by hand, drive it live, or play an MMD dance on it. At its core is a SteamVR/OpenVR virtual-device driver plus a companion UI (`AnyaDance.exe`) that streams to it. The driver exposes six virtual devices for VRChat full-body testing:
 
 - HMD
 - left controller
@@ -29,7 +29,7 @@ You use this software entirely at your own risk. It is provided "as is" without 
 
 This project is not affiliated with or endorsed by VRChat, Valve, Steam, or SteamVR. All trademarks belong to their respective owners.
 
-See [DISCLAIMER.md](DISCLAIMER.md) for the full text. The companion tool also shows this disclaimer and requires acceptance on first launch.
+See [DISCLAIMER.md](DISCLAIMER.md) for the full text. The companion UI also shows this disclaimer and requires acceptance on first launch.
 
 ## Status
 
@@ -64,7 +64,7 @@ build\out\anyadance\resources\...
 build\out\AnyaDance.zip
 ```
 
-The tool ships inside the driver folder, so `build\out\anyadance\` is one
+the UI ships inside the driver folder, so `build\out\anyadance\` is one
 self-contained, shippable bundle, and the build also zips it into
 `build\out\AnyaDance.zip` to hand to others directly. The exe registers its own folder as the SteamVR
 driver, so OpenVR finds `driver.vrdrivermanifest` and `bin\win64\driver_anyadance.dll`
@@ -128,12 +128,12 @@ The UI:
 - continues streaming while minimized or unfocused
 - sends a final neutral-input frame on normal exit
 - keeps the UDP log in English, omits unchanged keepalive packets, and names what each entry was: the key and action that changed (for example `Z left trigger down`), the device that was dragged (for example `Hip manipulated`), or a finger-bend change
-- shows hover or pinned row detail with three payload actions: Copy (the raw request body), Copy resend command (a runnable PowerShell UDP one-liner), and Resend (replays the exact datagram from the tool over its own socket)
+- shows hover or pinned row detail with three payload actions: Copy (the raw request body), Copy resend command (a runnable PowerShell UDP one-liner), and Resend (replays the exact datagram from the UI over its own socket)
 - can register/unregister its own folder as the SteamVR driver and restart SteamVR (with a confirmation) from its own buttons
 - has an Always on top checkbox that pins the window above other windows; the choice is remembered between runs
 - can play an MMD dance on the fly: the **Dance (MMD)** button opens a dialog to pick a `.vmd` motion and a `.pmx`/`.pmd` model, then Analyze and Play stream the dance onto the six devices (see [docs/mmd-dance.md](docs/mmd-dance.md))
 - can save and restore poses and dances as `.nya` clips: **Save Pose** / **Load Pose** in the main window capture and restore the current pose, and the Dance dialog can **Save .nya** of an analyzed dance and **Load .nya** to play it again without re-solving
-- supports English and Simplified Chinese UI strings through `src/tool/localization.*`
+- supports English and Simplified Chinese UI strings through `src/ui/localization.*`
 
 Key bindings:
 
@@ -147,7 +147,7 @@ Z     left trigger while held
 X     right trigger while held
 ```
 
-Mouse manipulation uses the six device boxes. The capture panel and boxes resize with the tool window. The HMD box allows rotation, plus vertical (Y) movement with a left+right mouse drag (clamped to the 2 m Y limit). Other devices use left mouse drag for local X/Y movement, middle mouse drag for rotation, and right mouse drag for depth movement. The HMD/Global frame radio buttons choose whether manipulation uses the HMD yaw basis or fixed world axes. The hand and foot pair mirror checkboxes use the same frame setting: HMD mode mirrors across the HMD-yaw YZ plane, and Global mode mirrors across world axes centered on the HMD position. The mouse wheel opens and closes both hands' fingers. Hold a number key while scrolling to bend a single finger: `1`-`5` are the left hand from pinky to thumb, `6`-`0` are the right hand from thumb to pinky (so `5`/`6` are the thumbs and `1`/`0` the pinkies). Each finger is clamped to `[0, 1]`, and scrolling all the way in one direction resets every finger to fully open or fully closed. Closing every finger on a hand into a fist (all bends near full) presses that hand's grip; releasing any finger releases it, which drives VRChat's grab.
+Mouse manipulation uses the six device boxes. The capture panel and boxes resize with the UI window. The HMD box allows rotation, plus vertical (Y) movement with a left+right mouse drag (clamped to the 2 m Y limit). Other devices use left mouse drag for local X/Y movement, middle mouse drag for rotation, and right mouse drag for depth movement. The HMD/Global frame radio buttons choose whether manipulation uses the HMD yaw basis or fixed world axes. The hand and foot pair mirror checkboxes use the same frame setting: HMD mode mirrors across the HMD-yaw YZ plane, and Global mode mirrors across world axes centered on the HMD position. The mouse wheel opens and closes both hands' fingers. Hold a number key while scrolling to bend a single finger: `1`-`5` are the left hand from pinky to thumb, `6`-`0` are the right hand from thumb to pinky (so `5`/`6` are the thumbs and `1`/`0` the pinkies). Each finger is clamped to `[0, 1]`, and scrolling all the way in one direction resets every finger to fully open or fully closed. Closing every finger on a hand into a fist (all bends near full) presses that hand's grip; releasing any finger releases it, which drives VRChat's grab.
 
 Dragging the empty area of the body panel acts as the right thumbstick: the press point is the stick center, and dragging deflects it within ±1 on each axis, returning to neutral on release. This is meant for navigating the right-hand quick menu (opened by holding `M`).
 
@@ -159,9 +159,9 @@ Dragging the empty area of the body panel acts as the right thumbstick: the pres
 
 The **Dance (MMD)** button plays an MMD dance on the six virtual devices live in
 memory. Blender + MMD Tools solves the `.vmd` motion against a model you supply
-(PMX/PMD), and the tool does a small remapping onto the hardcoded rig and streams
+(PMX/PMD), and the UI does a small remapping onto the hardcoded rig and streams
 it at 60 Hz. Pick the VMD and model in the dialog, hit Analyze, then Play. Use
-**Advanced** to set Blender and MMD Tools paths for custom installs; the tool
+**Advanced** to set Blender and MMD Tools paths for custom installs; the UI
 remembers those paths.
 
 Requirements: [Blender](https://www.blender.org/) and the
@@ -186,7 +186,7 @@ ranges.
 
 ## Safety And Liveness
 
-All six devices have a hard maximum Y value of `2.0 m`. The tool clamps before serialization and the native driver clamps again after packet validation.
+All six devices have a hard maximum Y value of `2.0 m`. The UI clamps before serialization and the native driver clamps again after packet validation.
 
 All six devices start connected and valid at neutral poses. Accepted packets update the latest pose and controller inputs. If packets stop, SteamVR continues to see each device connected, valid, and `TrackingResult_Running_OK` at its last accepted pose.
 
@@ -213,14 +213,14 @@ See [docs/protocol.md](docs/protocol.md) for the full protocol.
 
 `unregister_driver.ps1` removes the driver entry and restores `steamvr.vrsettings` from the backup that was made during registration. After SteamVR restarts your real devices will track normally again.
 
-You can also unregister from within the tool using the **Unregister Driver** button, which triggers the same script and prompts to restart SteamVR automatically.
+You can also unregister from within the UI using the **Unregister Driver** button, which triggers the same script and prompts to restart SteamVR automatically.
 
 ## Uninstall
 
 1. **Unregister the driver** (see [Unregister](#unregister) above) and restart SteamVR so real devices are restored.
 2. Delete the AnyaDance folder you extracted.
-3. Optionally delete the tool's saved state from AppData:
-   - `%LOCALAPPDATA%\AnyaDance\tool_state.ini` — saved preferences (window size, paths, always-on-top, etc.)
+3. Optionally delete the UI's saved state from AppData:
+   - `%LOCALAPPDATA%\AnyaDance\ui_state.ini` — saved preferences (window size, paths, always-on-top, etc.)
    - `%LOCALAPPDATA%\AnyaDance\steamvr.vrsettings.backup` — the SteamVR settings backup made during registration (removed automatically on unregister)
    - `%LOCALAPPDATA%\AnyaDance\registered_driver_path.txt` — the path recorded at registration so unregister can find the bundle even if it moved (removed automatically on unregister)
 

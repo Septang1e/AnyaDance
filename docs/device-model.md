@@ -34,7 +34,7 @@ The controllers advertise `knuckles` controller type and use Valve Index render 
 
 ## T-Pose Constants
 
-The companion tool starts and resets to a canonical test T-pose. These HMD-local position offsets are intentionally centralized and test-tunable:
+The companion UI starts and resets to a canonical test T-pose. These HMD-local position offsets are intentionally centralized and test-tunable:
 
 ```text
 HMD Y:            1.50 m
@@ -73,7 +73,7 @@ stretched.
 
 ## Tool Mirroring
 
-The companion tool has one mirror checkbox between the controller boxes and one between the foot boxes. When enabled, dragging either side makes the opposite side the absolute reflected pose. In HMD frame mode, the reflection uses the local YZ plane defined by the current HMD yaw and HMD position. In Global frame mode, it uses world axes with the HMD position as the center. This keeps the pair symmetric rather than copying or negating only the drag delta.
+The companion UI has one mirror checkbox between the controller boxes and one between the foot boxes. When enabled, dragging either side makes the opposite side the absolute reflected pose. In HMD frame mode, the reflection uses the local YZ plane defined by the current HMD yaw and HMD position. In Global frame mode, it uses world axes with the HMD position as the center. This keeps the pair symmetric rather than copying or negating only the drag delta.
 
 The capture panel reserves a fixed-height mouse-help area, keeping the device rows stable while switching languages. The boxes resize to fit the panel height. Left mouse drag moves non-HMD devices in local X/Y, middle mouse drag rotates, and right mouse drag moves depth. The HMD allows rotation, plus vertical (Y) movement with a left+right mouse drag, clamped to `kMaxDeviceY`.
 
@@ -81,8 +81,8 @@ Dragging the empty area of the panel drives the right controller thumbstick: the
 
 ## Tool Log
 
-The companion tool keeps the UDP log in English regardless of selected UI language. Hovering any part of a log row shows the transmitted JSON. Clicking a row highlights it and opens a pinned detail window with a scrollable JSON view; clicking the highlighted row again closes the detail window. Focus changes are logged only when they release active controller input.
+The companion UI keeps the UDP log in English regardless of selected UI language. Hovering any part of a log row shows the transmitted JSON. Clicking a row highlights it and opens a pinned detail window with a scrollable JSON view; clicking the highlighted row again closes the detail window. Focus changes are logged only when they release active controller input.
 
 ## Localization
 
-Tool UI strings live in `src/tool/localization.*`. The row-per-string table owns the available language definitions by code and display name; UI rendering iterates that table, while UDP log labels intentionally use the English strings.
+UI strings live in `src/ui/localization.*`. The row-per-string table owns the available language definitions by code and display name; UI rendering iterates that table, while UDP log labels intentionally use the English strings.

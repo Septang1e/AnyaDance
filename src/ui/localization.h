@@ -2,7 +2,7 @@
 
 #include <cstddef>
 
-namespace anyadance::tool {
+namespace anyadance::ui {
 
 // Languages are columns in the localization table. Add one here and add a
 // matching column entry to every row in localization.cpp.
@@ -123,4 +123,4 @@ void SetCurrentLanguage(Language language);
 const LanguageInfo& GetLanguageInfo(Language language);
 Language FindLanguageByCode(const char* code, Language fallback);
 
-} // namespace anyadance::tool
+} // namespace anyadance::ui

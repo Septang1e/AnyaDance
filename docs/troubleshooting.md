@@ -33,13 +33,13 @@ The virtual HMD renders at `1920x1080` per eye by default. If the image looks so
 
 Controllers and trackers stay connected and valid even when packets stop. If they do not move, start `AnyaDance.exe` and confirm it is streaming the full six-device frame at 60 Hz.
 
-## HMD Goes Grey When The Tool Closes
+## HMD Goes Grey When the UI Closes
 
 With the virtual HMD enabled, the driver keeps the HMD connected and valid when packets stop. Check SteamVR logs for `[anyadance]` messages and verify that the loaded DLL is `driver_anyadance.dll` from the current build output.
 
 ## Key Bindings Do Not Work
 
-The test tool only reads keyboard state while its window is focused. It also disables key mappings while an ImGui text edit widget is active. Click the tool window and try again.
+The UI only reads keyboard state while its window is focused. It also disables key mappings while an ImGui text edit widget is active. Click the UI window and try again.
 
 ## SteamVR Settings Look Wrong
 

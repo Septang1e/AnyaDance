@@ -1,6 +1,6 @@
 #include "resource.h"
 
-// Paths are relative to this .rc file (src/tool).
+// Paths are relative to this .rc file (src/ui).
 IDI_APPICON  ICON    "../../driver/resources/images/anya_icon.ico"
 IDR_ANYA_PNG RCDATA  "../../driver/resources/images/anya.png"
 IDR_ANYA_BANNER_PNG RCDATA "../../driver/resources/images/anya_banner.png"

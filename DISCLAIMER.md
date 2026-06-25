@@ -22,5 +22,5 @@ agree to hold the authors harmless from any claim arising out of your use.
 This project is not affiliated with or endorsed by VRChat, Valve, Steam, or
 SteamVR. All trademarks belong to their respective owners.
 
-This text is not legal advice. The companion tool (`AnyaDance.exe`)
+This text is not legal advice. The companion UI (`AnyaDance.exe`)
 displays this disclaimer and requires acceptance on first launch.

@@ -1,4 +1,4 @@
-#include "tool/mmd_dance.h"
+#include "ui/mmd_dance.h"
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -17,7 +17,7 @@
 #include <sstream>
 #include <vector>
 
-namespace anyadance::tool {
+namespace anyadance::ui {
 namespace {
 
 std::wstring Widen(const std::string& utf8) {
@@ -342,7 +342,7 @@ MmdExportResult RunMmdExport(const MmdDanceConfig& config) {
 
     const std::wstring script = ScriptPath();
     if (!FileExists(script)) {
-        result.message = "blender_export_mmd.py was not found next to the tool.";
+        result.message = "blender_export_mmd.py was not found next to the UI.";
         return result;
     }
 
@@ -398,4 +398,4 @@ MmdExportResult RunMmdExport(const MmdDanceConfig& config) {
     return result;
 }
 
-} // namespace anyadance::tool
+} // namespace anyadance::ui

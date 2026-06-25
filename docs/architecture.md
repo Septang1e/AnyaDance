@@ -4,9 +4,9 @@
 
 AnyaDance has three runtime parts:
 
-1. `anyadance_core`: dependency-free C++17 logic shared by the driver, test UI, and tests.
+1. `anyadance_core`: dependency-free C++17 logic shared by the driver, UI, and tests.
 2. `driver_anyadance.dll`: SteamVR/OpenVR server driver loaded by SteamVR.
-3. `AnyaDance.exe`: Dear ImGui Win32/DX11 test sender.
+3. `AnyaDance.exe`: Dear ImGui Win32/DX11 companion UI.
 
 ## Core Library
 
@@ -33,6 +33,6 @@ The driver starts a loopback UDP receiver on `127.0.0.1:39570`. Valid samples up
 
 All devices start valid at neutral poses and remain valid if packets stop. The driver reports the latest accepted pose as connected, valid, and `TrackingResult_Running_OK`.
 
-## Test Tool
+## UI
 
-The companion tool has a UI thread and a streaming thread. The UI thread owns ImGui rendering, keyboard polling while focused, and mouse manipulation. The streaming thread copies synchronized state, serializes once per frame, and sends a full six-device frame at 60 Hz. The UI log shows state-changing sends; unchanged keepalive packets stay quiet.
+The companion UI has a UI thread and a streaming thread. The UI thread owns ImGui rendering, keyboard polling while focused, and mouse manipulation. The streaming thread copies synchronized state, serializes once per frame, and sends a full six-device frame at 60 Hz. The UI log shows state-changing sends; unchanged keepalive packets stay quiet.

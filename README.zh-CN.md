@@ -132,7 +132,7 @@ ctest --test-dir build -C Release --output-on-failure
 - 提供“窗口置顶”复选框，可将窗口固定在其他窗口之上；该选择会在多次运行间记住
 - 可播放 MMD 舞蹈：点击 **舞蹈 (MMD)** 选择 `.vmd` 动作和 `.pmx`/`.pmd` 模型，分析后即可把舞蹈实时推送到六个设备（见 [docs/mmd-dance.zh-CN.md](docs/mmd-dance.zh-CN.md)）
 - 可将姿势与舞蹈保存为 `.nya` 片段：主窗口的 **保存姿势** / **加载姿势** 用于捕获并恢复当前姿势；舞蹈对话框可 **保存 .nya**（已分析的舞蹈）并 **加载 .nya** 直接重新播放，无需再次解算
-- 通过 `src/tool/localization.*` 与本地化表支持英文与简体中文界面
+- 通过 `src/ui/localization.*` 与本地化表支持英文与简体中文界面
 
 按键绑定：
 
@@ -202,7 +202,7 @@ X     按住时右扳机
 1. **取消注册驱动**（见上方[取消注册](#取消注册)），并重启 SteamVR 以恢复真实设备。
 2. 删除你解压的 AnyaDance 文件夹。
 3. 可选：删除工具在 AppData 中保存的状态：
-   - `%LOCALAPPDATA%\AnyaDance\tool_state.ini` — 保存的偏好设置（窗口大小、路径、窗口置顶等）
+   - `%LOCALAPPDATA%\AnyaDance\ui_state.ini` — 保存的偏好设置（窗口大小、路径、窗口置顶等）
    - `%LOCALAPPDATA%\AnyaDance\steamvr.vrsettings.backup` — 注册时备份的 SteamVR 设置文件（取消注册时自动删除）
    - `%LOCALAPPDATA%\AnyaDance\registered_driver_path.txt` — 注册时记录的驱动路径，便于在文件夹被移动后仍能取消注册（取消注册时自动删除）
 

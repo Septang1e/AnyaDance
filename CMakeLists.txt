@@ -18,12 +18,16 @@ include(FetchContent)
 include(CTest)
 
 option(ANYADANCE_BUILD_DRIVER "Build the SteamVR driver" ON)
-option(ANYADANCE_BUILD_TOOL "Build AnyaDance.exe" ON)
+option(ANYADANCE_BUILD_UI "Build AnyaDance.exe UI" ON)
 option(ANYADANCE_BUILD_TESTS "Build CTest tests" ON)
 option(ANYADANCE_FETCH_OPENVR "Fetch ValveSoftware/openvr if OPENVR_SDK_ROOT is not provided" ON)
 option(ANYADANCE_FETCH_IMGUI "Fetch Dear ImGui if IMGUI_ROOT is not provided" ON)
 set(OPENVR_SDK_ROOT "" CACHE PATH "Path to a local ValveSoftware/openvr SDK checkout")
 set(IMGUI_ROOT "" CACHE PATH "Path to a local Dear ImGui checkout")
+
+if(DEFINED ANYADANCE_BUILD_TOOL)
+    set(ANYADANCE_BUILD_UI "${ANYADANCE_BUILD_TOOL}" CACHE BOOL "Build AnyaDance.exe UI" FORCE)
+endif()
 
 set(ANYADANCE_OUTPUT_DRIVER_ROOT "${CMAKE_BINARY_DIR}/out/anyadance")
 
@@ -135,7 +139,7 @@ if(ANYADANCE_BUILD_DRIVER)
     )
 endif()
 
-if(ANYADANCE_BUILD_TOOL)
+if(ANYADANCE_BUILD_UI)
     resolve_imgui()
     add_library(imgui STATIC
         "${IMGUI_SOURCE_ROOT}/imgui.cpp"
@@ -148,32 +152,38 @@ if(ANYADANCE_BUILD_TOOL)
     target_include_directories(imgui PUBLIC "${IMGUI_SOURCE_ROOT}" "${IMGUI_SOURCE_ROOT}/backends")
     target_compile_definitions(imgui PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN)
 
-    add_executable(AnyaDanceTool WIN32
-        src/tool/main.cpp
-        src/tool/localization.cpp
-        src/tool/driver_control.cpp
-        src/tool/mmd_dance.cpp
-        src/tool/tool.rc
+    add_executable(AnyaDanceUI WIN32
+        src/ui/main.cpp
+        src/ui/ui_state.cpp
+        src/ui/input.cpp
+        src/ui/panel_main.cpp
+        src/ui/panel_body.cpp
+        src/ui/panel_log.cpp
+        src/ui/panel_dance.cpp
+        src/ui/localization.cpp
+        src/ui/driver_control.cpp
+        src/ui/mmd_dance.cpp
+        src/ui/ui.rc
     )
-    target_include_directories(AnyaDanceTool PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
-    target_link_libraries(AnyaDanceTool PRIVATE anyadance_core imgui d3d11 dxgi d3dcompiler windowscodecs ole32 shell32 comdlg32 Ws2_32)
-    # Ship the Blender MMD solve script beside the tool so the Dance dialog can
+    target_include_directories(AnyaDanceUI PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
+    target_link_libraries(AnyaDanceUI PRIVATE anyadance_core imgui d3d11 dxgi d3dcompiler windowscodecs ole32 shell32 comdlg32 Ws2_32)
+    # Ship the Blender MMD solve script beside the UI so the Dance dialog can
     # find it at <exe dir>\scripts\blender_export_mmd.py.
-    add_custom_command(TARGET AnyaDanceTool POST_BUILD
+    add_custom_command(TARGET AnyaDanceUI POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${CMAKE_CURRENT_SOURCE_DIR}/scripts/blender_export_mmd.py"
             "${ANYADANCE_OUTPUT_DRIVER_ROOT}/scripts/blender_export_mmd.py"
-        COMMENT "Staging Blender MMD export script beside the tool"
+        COMMENT "Staging Blender MMD export script beside the UI"
     )
-    # The tool ships inside the driver root so the registered folder and the run
+    # The UI ships inside the driver root so the registered folder and the run
     # folder are one and the same: exe + driver.vrdrivermanifest + bin/win64/dll.
-    set_target_properties(AnyaDanceTool PROPERTIES
+    set_target_properties(AnyaDanceUI PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${ANYADANCE_OUTPUT_DRIVER_ROOT}"
         OUTPUT_NAME "AnyaDance"
     )
     foreach(CONFIG_TYPE Debug Release RelWithDebInfo MinSizeRel)
         string(TOUPPER "${CONFIG_TYPE}" CONFIG_TYPE_UPPER)
-        set_target_properties(AnyaDanceTool PROPERTIES
+        set_target_properties(AnyaDanceUI PROPERTIES
             "RUNTIME_OUTPUT_DIRECTORY_${CONFIG_TYPE_UPPER}" "${ANYADANCE_OUTPUT_DRIVER_ROOT}"
         )
     endforeach()
@@ -209,7 +219,7 @@ endif()
 
 # Package the driver root into a single zip so the whole self-contained folder
 # (exe + manifest + bin/win64/dll + resources) can be handed to others directly.
-if(ANYADANCE_BUILD_DRIVER AND ANYADANCE_BUILD_TOOL)
+if(ANYADANCE_BUILD_DRIVER AND ANYADANCE_BUILD_UI)
     add_custom_target(package_driver ALL
         COMMAND ${CMAKE_COMMAND} -E rm -f "${CMAKE_BINARY_DIR}/out/AnyaDance.zip"
         COMMAND ${CMAKE_COMMAND} -E rm -rf "${CMAKE_BINARY_DIR}/out/package"
@@ -220,10 +230,12 @@ if(ANYADANCE_BUILD_DRIVER AND ANYADANCE_BUILD_TOOL)
         COMMAND ${CMAKE_COMMAND} -E rm -f
             "${CMAKE_BINARY_DIR}/out/package/anyadance/AnyaDanceTool.exe"
             "${CMAKE_BINARY_DIR}/out/package/anyadance/AnyaDanceTool.pdb"
+            "${CMAKE_BINARY_DIR}/out/package/anyadance/AnyaDanceUI.pdb"
+            "${CMAKE_BINARY_DIR}/out/package/anyadance/AnyaDance.pdb"
         COMMAND ${CMAKE_COMMAND} -E chdir "${CMAKE_BINARY_DIR}/out/package"
             ${CMAKE_COMMAND} -E tar cf "../AnyaDance.zip" --format=zip "anyadance"
         WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/out"
-        DEPENDS driver_anyadance AnyaDanceTool
+        DEPENDS driver_anyadance AnyaDanceUI
         COMMENT "Packaging ${CMAKE_BINARY_DIR}/out/AnyaDance.zip"
         VERBATIM
     )

@@ -84,7 +84,7 @@ function Get-AnyaDanceBackupPath {
 }
 
 # The exact driver-root path registered, recorded in the stable per-user AppData
-# folder. Shared with the in-tool register/unregister (same file name), so either
+# folder. Shared with the in-UI register/unregister (same file name), so either
 # entry point can clean up the other's registration even after the bundle moves.
 function Get-AnyaDanceRegisteredPathRecord {
     return Join-Path (Join-Path $env:LOCALAPPDATA "AnyaDance") "registered_driver_path.txt"

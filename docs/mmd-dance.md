@@ -2,12 +2,12 @@
 
 **English** | [简体中文](mmd-dance.zh-CN.md)
 
-The companion tool can play an MMD dance (a `.vmd` motion) on the six virtual
+The companion UI can play an MMD dance (a `.vmd` motion) on the six virtual
 devices live in memory. Blender + MMD Tools does the accurate FK/IK solve against
-a real model; the tool does a small remapping onto the hardcoded rig and streams
+a real model; the UI does a small remapping onto the hardcoded rig and streams
 it over UDP at 60 Hz like any other pose.
 
-It is reached from the **Dance (MMD)** button in the right column of the tool's
+It is reached from the **Dance (MMD)** button in the right column of the UI's
 main controls, which opens a small dialog: pick a VMD and a model, **Analyze**,
 then **Play**.
 
@@ -30,7 +30,7 @@ then **Play**.
   -> Blender + MMD Tools import + evaluate FK/IK/constraints   (scripts/blender_export_mmd.py)
   -> one solved-motion JSON of world-space joint poses          (src/core/solved_motion.*)
   -> simplified remap onto the six hardcoded devices            (src/core/mmd_retarget.*)
-  -> 60 Hz UDP stream to the driver                             (the tool's normal path)
+  -> 60 Hz UDP stream to the driver                             (the UI's normal path)
 ```
 
 `scripts/blender_export_mmd.py` runs headless inside Blender. It imports the
@@ -81,7 +81,7 @@ rate) uses fixed defaults.
 
 **Advanced** (collapsible) holds the **Blender path** and **MMD Tools path**.
 They are auto-filled with the detected locations when the dialog opens, so most
-users keep the detected values. Manual paths are saved in the tool preferences
+users keep the detected values. Manual paths are saved in the UI preferences
 and reused on the next launch.
 
 **Analyze** runs the Blender solve and reports duration / frame count / scale.
@@ -104,9 +104,9 @@ limit and finger bends to `[0, 1]` on load. See `src/core/nya_format.*`.
 ## Notes and limits
 
 - The first solve of a long dance can take Blender several seconds to a minute;
-  the tool keeps rendering and streaming a T-pose while it runs.
+  the UI keeps rendering and streaming a T-pose while it runs.
 - Quality depends on matching the motion to its intended model. A wildly
   different model (very different proportions) will still play but may look off.
-- This is offline-solve + live-play: the solved motion is used by the tool for
+- This is offline-solve + live-play: the solved motion is used by the UI for
   playback. Standard VRChat anti-cheat caveats in the project
   [disclaimer](../DISCLAIMER.md) apply.

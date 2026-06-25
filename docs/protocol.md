@@ -118,7 +118,7 @@ All devices are clamped to a maximum Y of `2.0 m`:
 position.y = std::min(position.y, 2.0f);
 ```
 
-The clamp applies to Y. The companion tool clamps before serialization. The native driver clamps again after packet validation and rate-limits repeated clamp warnings.
+The clamp applies to Y. The companion UI clamps before serialization. The native driver clamps again after packet validation and rate-limits repeated clamp warnings.
 
 ## Pose Liveness
 

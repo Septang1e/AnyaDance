@@ -1,8 +1,8 @@
-#include "tool/localization.h"
+#include "ui/localization.h"
 
 #include <cstring>
 
-namespace anyadance::tool {
+namespace anyadance::ui {
 namespace {
 
 // One row per Text, one column per Language. To add a string, add a row here
@@ -57,8 +57,8 @@ const char* const kStrings[kTextCount][kLanguageCount] = {
     /* DriverStatusReady     */ {"Register the driver, then restart SteamVR.", u8"先注册驱动，然后重启 SteamVR。"},
     /* StatusRegistered      */ {"Registered. Use Restart SteamVR to apply.", u8"已注册。点击“重启 SteamVR”以应用。"},
     /* StatusUnregistered    */ {"Unregistered. Use Restart SteamVR to apply.", u8"已取消注册。点击“重启 SteamVR”以应用。"},
-    /* StatusManifestMissing */ {"driver.vrdrivermanifest was not found next to the tool.", u8"未在工具旁找到 driver.vrdrivermanifest。"},
-    /* StatusDriverDllMissing*/ {"bin/win64/driver_anyadance.dll was not found next to the tool.", u8"未在工具旁找到 bin/win64/driver_anyadance.dll。"},
+    /* StatusManifestMissing */ {"driver.vrdrivermanifest was not found next to the UI.", u8"未在工具旁找到 driver.vrdrivermanifest。"},
+    /* StatusDriverDllMissing*/ {"bin/win64/driver_anyadance.dll was not found next to the UI.", u8"未在工具旁找到 bin/win64/driver_anyadance.dll。"},
     /* StatusOpenvrPaths..   */ {"openvrpaths.vrpath not found. Launch SteamVR once, then try again.", u8"未找到 openvrpaths.vrpath。请先启动一次 SteamVR，然后重试。"},
     /* StatusConfigWrite..   */ {"Could not update the SteamVR configuration.", u8"无法更新 SteamVR 配置。"},
     /* StatusRestarting      */ {"Restarting SteamVR...", u8"正在重启 SteamVR……"},
@@ -180,4 +180,4 @@ Language FindLanguageByCode(const char* code, Language fallback) {
     return fallback;
 }
 
-} // namespace anyadance::tool
+} // namespace anyadance::ui

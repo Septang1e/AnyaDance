@@ -2,7 +2,7 @@
 
 #include <string>
 
-namespace anyadance::tool {
+namespace anyadance::ui {
 
 // Outcome codes; the UI maps these to localized strings so driver_control stays
 // free of presentation concerns.
@@ -26,7 +26,7 @@ struct DriverActionResult {
 
 // Register/unregister the driver by editing the user's openvrpaths.vrpath and
 // steamvr.vrsettings, the same files vrpathreg manipulates. The driver root is
-// the tool executable's own folder, so the shipped layout is a single flat
+// the UI executable's own folder, so the shipped layout is a single flat
 // folder: the exe alongside driver.vrdrivermanifest, bin/win64/driver_anyadance.dll,
 // and resources/. RestartSteamVR stops the SteamVR processes and relaunches via
 // Steam.
@@ -34,4 +34,4 @@ DriverActionResult RegisterDriver();
 DriverActionResult UnregisterDriver();
 DriverActionResult RestartSteamVR();
 
-} // namespace anyadance::tool
+} // namespace anyadance::ui

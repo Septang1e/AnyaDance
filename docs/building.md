@@ -41,7 +41,7 @@ build/out/anyadance/resources/input/anyadance_hmd_profile.json
 build/out/anyadance/resources/settings/default.vrsettings
 ```
 
-The tool builds into the driver folder, so `build/out/anyadance/` is one
+the UI builds into the driver folder, so `build/out/anyadance/` is one
 self-contained bundle: the exe registers its own folder as the SteamVR driver.
 
 ## Tests
@@ -53,7 +53,7 @@ ctest --test-dir build -C Release --output-on-failure
 For a dependency-free test-only build:
 
 ```powershell
-cmake -S . -B build-tests -DANYADANCE_BUILD_DRIVER=OFF -DANYADANCE_BUILD_TOOL=OFF
+cmake -S . -B build-tests -DANYADANCE_BUILD_DRIVER=OFF -DANYADANCE_BUILD_UI=OFF
 cmake --build build-tests --config Debug
 ctest --test-dir build-tests -C Debug --output-on-failure
 ```

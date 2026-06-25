@@ -1,6 +1,6 @@
 """Solve an MMD VMD dance against a PMX/PMD model and export joint world poses.
 
-AnyaDance runs this through Blender (not the tool process):
+AnyaDance runs this through Blender (not the UI process):
 
     blender --background --python scripts/blender_export_mmd.py -- \
       --model model.pmx --vmd dance.vmd --output solved.json [--mmd-tools-path DIR] [--fps 60]
@@ -9,7 +9,7 @@ MMD Tools (https://github.com/MMD-Blender/blender_mmd_tools) must be installed a
 a Blender add-on, or pass --mmd-tools-path. The script imports the model and VMD,
 lets Blender/MMD Tools evaluate FK/IK/constraints, then writes the evaluated
 world-space poses of the body joints AnyaDance needs into a small JSON file.
-The tool reads that JSON and does the (simple) device remapping itself.
+the UI reads that JSON and does the (simple) device remapping itself.
 
 Output JSON is in OpenVR standing convention: right-handed, +Y up, -Z forward,
 metres, quaternions (x, y, z, w). The avatar's left side is on -X.

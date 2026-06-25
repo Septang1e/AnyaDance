@@ -6,10 +6,10 @@ Guidance for AI coding agents working in this repository.
 
 AnyaDance is a Windows-only toolkit for driving and animating a VRChat avatar's
 full body (pose by hand, live drive, or MMD dance playback). At its core is a
-SteamVR/OpenVR virtual-device driver plus a Dear ImGui companion tool. The driver
+SteamVR/OpenVR virtual-device driver plus a Dear ImGui companion UI. The driver
 exposes six virtual devices (HMD, two controllers, hip and two foot trackers) and
 receives pose/input frames over loopback UDP JSON at `127.0.0.1:39570`. The
-companion tool (`AnyaDance.exe`) streams a six-device T-pose at 60 Hz.
+companion UI (`AnyaDance.exe`) streams a six-device T-pose at 60 Hz.
 Released under the Apache License 2.0 as part of Project Anya.
 
 ## Layout
@@ -23,14 +23,14 @@ Released under the Apache License 2.0 as part of Project Anya.
   by the tests. Keep it free of OpenVR and Win32 so tests build it.
 - `src/driver/` — the SteamVR driver DLL (`server_driver`, `virtual_device`,
   `udp_pose_receiver`). Links OpenVR.
-- `src/tool/` — the Dear ImGui Win32/DX11 test tool (`main.cpp`, `localization`,
+- `src/ui/` — the Dear ImGui Win32/DX11 UI (`main.cpp`, `localization`,
   `driver_control`, `mmd_dance`). `mmd_dance` launches Blender headless with
   `scripts/blender_export_mmd.py` to solve a VMD against a model and reads back the
   single solved-motion JSON. `driver_control` registers/unregisters the driver by editing
   `openvrpaths.vrpath` and `steamvr.vrsettings` directly (no `vrpathreg` process),
   and restarts SteamVR (stops the vrserver/vrmonitor/vrcompositor processes, then
   relaunches via `steam://run/250820`). The driver root is the exe's own folder,
-  so the tool ships inside the driver bundle and registers that folder; OpenVR
+  so the UI ships inside the driver bundle and registers that folder; OpenVR
   loads `bin/win64/driver_anyadance.dll` (it cannot be a loose root DLL). The
   build outputs the exe into `out/anyadance/` for this reason, and the
   `package_driver` target zips that folder into `out/AnyaDance.zip`.
@@ -76,7 +76,7 @@ a root turns off fetching for that dependency.
 
 ## Conventions
 
-- C++17, Windows-only. Define `NOMINMAX` before `windows.h` (the tool does) so
+- C++17, Windows-only. Define `NOMINMAX` before `windows.h` (the UI does) so
   `std::min`/`std::max`/`std::clamp` are not shadowed.
 - UDP protocol is version 1; keep it backward compatible unless
   `kProtocolVersion` changes. Shared constants live in `src/core/constants.h`.
@@ -88,14 +88,15 @@ a root turns off fetching for that dependency.
   Controllers and trackers report lost tracking after ~250 ms (`kPoseFreshTimeout`).
 - All devices set `Prop_IgnoreMotionForStandby_Bool` so SteamVR does not idle a
   held-still virtual device into standby/powersave.
-- All device Y is clamped to `2.0 m` (`kMaxDeviceY`) — in the tool before sending
+- All device Y is clamped to `2.0 m` (`kMaxDeviceY`) — in the UI before sending
   and in the driver after packet validation.
 - The UDP log is always recorded in English. UI strings are localized through the
-  row-per-string table in `src/tool/localization.*`; access with `Tr(Text::...)`.
+  row-per-string table in `src/ui/localization.*`; access with `Tr(Text::...)`.
   Adding a string is one enum value plus one table row (a `static_assert` guards
   the row count).
-- Add focused tests in `tests/main.cpp` for protocol, safety, freshness, T-pose,
-  input, manipulation, and log behavior. Update `docs/` when behavior changes.
+- Add focused tests in the relevant `tests/test_*.cpp` file for protocol,
+  safety, freshness, T-pose, input, manipulation, and log behavior. Update
+  `docs/` when behavior changes.
 - Do not commit build artifacts (`build/`), PDBs, SteamVR backups, or local
   settings; `.gitignore` covers these.
 
@@ -108,7 +109,7 @@ a root turns off fetching for that dependency.
   the permanent history. Work-in-progress commit messages on a branch are not
   policed.
 - Write code comments in English. User-facing UI strings (localized via
-  `src/tool/localization.*`) and translated docs (`README.zh-CN.md`) are exempt.
+  `src/ui/localization.*`) and translated docs (`README.zh-CN.md`) are exempt.
 
 ## Licensing
 
