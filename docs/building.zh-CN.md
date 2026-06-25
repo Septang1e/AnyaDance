@@ -41,7 +41,7 @@ build/out/anyadance/resources/input/anyadance_hmd_profile.json
 build/out/anyadance/resources/settings/default.vrsettings
 ```
 
-工具会构建进驱动文件夹，因此 `build/out/anyadance/` 是一个自包含的捆绑包：exe 会把自身所在的文件夹注册为 SteamVR 驱动。
+UI 会构建进驱动文件夹，因此 `build/out/anyadance/` 是一个自包含的捆绑包：exe 会把自身所在的文件夹注册为 SteamVR 驱动。
 
 ## 测试
 
@@ -52,7 +52,7 @@ ctest --test-dir build -C Release --output-on-failure
 仅构建测试、无需依赖：
 
 ```powershell
-cmake -S . -B build-tests -DANYADANCE_BUILD_DRIVER=OFF -DANYADANCE_BUILD_TOOL=OFF
+cmake -S . -B build-tests -DANYADANCE_BUILD_DRIVER=OFF -DANYADANCE_BUILD_UI=OFF
 cmake --build build-tests --config Debug
 ctest --test-dir build-tests -C Debug --output-on-failure
 ```

@@ -29,11 +29,11 @@ AnyaDance 作为 **Project Anya**（由 Pipira 开发的更大型项目）的一
 
 本项目与 VRChat、Valve、Steam 或 SteamVR 无任何关联，也未获其认可。所有商标归各自所有者所有。
 
-完整文本见 [DISCLAIMER.md](DISCLAIMER.md)。伴随工具也会显示此免责声明，并要求在首次启动时接受。具有法律约束力的版本以英文为准。
+完整文本见 [DISCLAIMER.md](DISCLAIMER.md)。伴随 UI 也会显示此免责声明，并要求在首次启动时接受。具有法律约束力的版本以英文为准。
 
 ## 状态
 
-代码可在 Windows 上使用 Visual Studio 2022 构建，且自动化测试通过。随附工具可注册 SteamVR 驱动、推送六个虚拟设备，并从同一构建产物打包驱动目录。
+代码可在 Windows 上使用 Visual Studio 2022 构建，且自动化测试通过。随附 UI 可注册 SteamVR 驱动、推送六个虚拟设备，并从同一构建产物打包驱动目录。
 
 ## 环境要求
 
@@ -64,11 +64,11 @@ build\out\anyadance\resources\...
 build\out\AnyaDance.zip
 ```
 
-工具就放在驱动文件夹内，因此 `build\out\anyadance\` 即为一个自包含、可直接分发的目录，
+UI 程序就放在驱动文件夹内，因此 `build\out\anyadance\` 即为一个自包含、可直接分发的目录，
 构建时还会将其打包为 `build\out\AnyaDance.zip`，可直接发给他人。
 exe 会将自身所在的文件夹注册为 SteamVR 驱动，OpenVR 便能在其旁边找到
 `driver.vrdrivermanifest` 与 `bin\win64\driver_anyadance.dll`。OpenVR 始终从
-`bin\win64\` 加载驱动 DLL，驱动根目录保存 manifest 与工具程序。
+`bin\win64\` 加载驱动 DLL，驱动根目录保存 manifest 与 UI 程序。
 
 使用本地依赖检出：
 
@@ -127,7 +127,7 @@ ctest --test-dir build -C Release --output-on-failure
 - 在最小化或失去焦点时仍继续推送
 - 正常退出时发送一帧中性输入
 - UDP 日志始终为英文，省略未变化的保活数据包，并标明每条记录的具体原因：变化的按键与动作（例如 `Z left trigger down`）、被拖拽的设备（例如 `Hip manipulated`），或手指弯曲的变化
-- 支持悬停或固定行查看详情，并提供三种针对载荷的操作：“复制”（原始请求体）、“复制重发命令”（可直接运行的 PowerShell UDP 单行命令）以及“重新发送”（由工具通过自身套接字重发该数据报）
+- 支持悬停或固定行查看详情，并提供三种针对载荷的操作：“复制”（原始请求体）、“复制重发命令”（可直接运行的 PowerShell UDP 单行命令）以及“重新发送”（由 UI 通过自身套接字重发该数据报）
 - 可通过自身按钮将其所在文件夹注册/取消注册为 SteamVR 驱动并重启 SteamVR（带确认）
 - 提供“窗口置顶”复选框，可将窗口固定在其他窗口之上；该选择会在多次运行间记住
 - 可播放 MMD 舞蹈：点击 **舞蹈 (MMD)** 选择 `.vmd` 动作和 `.pmx`/`.pmd` 模型，分析后即可把舞蹈实时推送到六个设备（见 [docs/mmd-dance.zh-CN.md](docs/mmd-dance.zh-CN.md)）
@@ -146,7 +146,7 @@ Z     按住时左扳机
 X     按住时右扳机
 ```
 
-鼠标操控使用六个设备方框。捕获面板与方框会随工具窗口缩放。头显方框可旋转，并可通过左键+右键拖拽进行垂直（Y）移动（受 2 m Y 上限限制）。其他设备使用鼠标左键拖拽进行本地 X/Y 移动，中键拖拽进行旋转，右键拖拽进行深度移动。HMD/Global 坐标系单选项决定操控使用头显偏航基准还是固定世界轴。手部与脚部成对的对称复选框使用相同坐标系设置：HMD 模式相对头显偏航的 YZ 平面对称，Global 模式以头显位置为中心、按世界轴对称。滚轮可开合双手手指。滚动时按住数字键可单独弯曲某根手指：`1`-`5` 对应左手从小指到拇指，`6`-`0` 对应右手从拇指到小指（即 `5`/`6` 为拇指，`1`/`0` 为小指）。每根手指都钳制在 `[0, 1]` 范围内，朝一个方向滚到底即可把所有手指重置为完全张开或完全握紧。当一只手的所有手指都握紧成拳（弯曲度均接近最大）时，会触发该手的握持（grip）；只要有任一手指松开即释放，从而驱动 VRChat 的抓取。
+鼠标操控使用六个设备方框。捕获面板与方框会随 UI 窗口缩放。头显方框可旋转，并可通过左键+右键拖拽进行垂直（Y）移动（受 2 m Y 上限限制）。其他设备使用鼠标左键拖拽进行本地 X/Y 移动，中键拖拽进行旋转，右键拖拽进行深度移动。HMD/Global 坐标系单选项决定操控使用头显偏航基准还是固定世界轴。手部与脚部成对的对称复选框使用相同坐标系设置：HMD 模式相对头显偏航的 YZ 平面对称，Global 模式以头显位置为中心、按世界轴对称。滚轮可开合双手手指。滚动时按住数字键可单独弯曲某根手指：`1`-`5` 对应左手从小指到拇指，`6`-`0` 对应右手从拇指到小指（即 `5`/`6` 为拇指，`1`/`0` 为小指）。每根手指都钳制在 `[0, 1]` 范围内，朝一个方向滚到底即可把所有手指重置为完全张开或完全握紧。当一只手的所有手指都握紧成拳（弯曲度均接近最大）时，会触发该手的握持（grip）；只要有任一手指松开即释放，从而驱动 VRChat 的抓取。
 
 在身体面板空白处拖拽相当于右摇杆：按下点即为摇杆中心，拖拽在每个轴上偏移 ±1，松开后回到中位。该功能用于操作右手快捷菜单（按住 `M` 打开）。
 
@@ -156,7 +156,7 @@ X     按住时右扳机
   <img src="docs/images/anya_dance.gif" alt="AnyaDance MMD 舞蹈播放" width="25%"><img src="docs/images/anya_dance.gif" alt="AnyaDance MMD 舞蹈播放" width="25%"><img src="docs/images/anya_dance.gif" alt="AnyaDance MMD 舞蹈播放" width="25%"><img src="docs/images/anya_dance.gif" alt="AnyaDance MMD 舞蹈播放" width="25%">
 </p>
 
-**舞蹈 (MMD)** 按钮会把 MMD 舞蹈在内存中实时播放到六个虚拟设备上。Blender + MMD Tools 会基于你提供的 PMX/PMD 模型解算 `.vmd` 动作，工具再把解算结果重映射到固定设备骨架并以 60 Hz 推送。自定义安装路径可在 **高级** 中指定；工具会记住这些路径。
+**舞蹈 (MMD)** 按钮会把 MMD 舞蹈在内存中实时播放到六个虚拟设备上。Blender + MMD Tools 会基于你提供的 PMX/PMD 模型解算 `.vmd` 动作，UI 再把解算结果重映射到固定设备骨架并以 60 Hz 推送。自定义安装路径可在 **高级** 中指定；UI 会记住这些路径。
 
 需要：[Blender](https://www.blender.org/) 与 [MMD Tools](https://github.com/MMD-Blender/blender_mmd_tools) 插件，以及你自己的模型。MMD 模型属于第三方作品并带有各自授权。详见 [docs/mmd-dance.zh-CN.md](docs/mmd-dance.zh-CN.md)。
 
@@ -168,7 +168,7 @@ X     按住时右扳机
 
 ## 安全与存活
 
-所有六个设备的 Y 值都有 `2.0 m` 的硬上限。工具在序列化前钳制，原生驱动在数据包校验后再次钳制。
+所有六个设备的 Y 值都有 `2.0 m` 的硬上限。UI 在序列化前钳制，原生驱动在数据包校验后再次钳制。
 
 六个设备都会以中性姿态开始，并保持连接且有效。被接受的数据包会更新最新姿态与控制器输入。数据包停止后，SteamVR 仍会看到每个设备停留在最后接受的姿态，并保持连接、有效、`TrackingResult_Running_OK`。
 
@@ -195,13 +195,13 @@ X     按住时右扳机
 
 `unregister_driver.ps1` 会移除驱动条目，并将 `steamvr.vrsettings` 从注册时创建的备份中还原。SteamVR 重启后，真实设备即可恢复正常追踪。
 
-你也可以在工具内通过 **取消注册驱动** 按钮完成该操作，它会触发相同的脚本并自动提示重启 SteamVR。
+你也可以在 UI 内通过 **取消注册驱动** 按钮完成该操作，它会触发相同的脚本并自动提示重启 SteamVR。
 
 ## 卸载
 
 1. **取消注册驱动**（见上方[取消注册](#取消注册)），并重启 SteamVR 以恢复真实设备。
 2. 删除你解压的 AnyaDance 文件夹。
-3. 可选：删除工具在 AppData 中保存的状态：
+3. 可选：删除 UI 在 AppData 中保存的状态：
    - `%LOCALAPPDATA%\AnyaDance\ui_state.ini` — 保存的偏好设置（窗口大小、路径、窗口置顶等）
    - `%LOCALAPPDATA%\AnyaDance\steamvr.vrsettings.backup` — 注册时备份的 SteamVR 设置文件（取消注册时自动删除）
    - `%LOCALAPPDATA%\AnyaDance\registered_driver_path.txt` — 注册时记录的驱动路径，便于在文件夹被移动后仍能取消注册（取消注册时自动删除）
