@@ -109,12 +109,35 @@ void RenderUi(HWND hwnd) {
     RenderUiModeControls(hwnd, true);
     ImGui::Separator();
 
-    if (ImGui::Button(Tr(Text::Reset), ImVec2(-1, 44))) {
-        StopDanceToTPose();  // a manual reset also stops any MMD playback
-        g_app.keyboard.Neutralize();
-        g_app.fingerBends[0] = FingerBends{};
-        g_app.fingerBends[1] = FingerBends{};
-        g_app.streamer.UpdateFrame(g_app.frame, En(Text::ResetReason), false);
+    // Pose row: Standing Pose | Reset to T-Pose | Menu Pose. Reset rebuilds the
+    // T-pose and stops any MMD playback; the two presets apply through RestorePose
+    // (which also stops playback) and leave finger bends untouched.
+    const float poseButtonWidth = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 2.0f) / 3.0f;
+    // Posed presets use the primary tint; Reset (return to the neutral T-pose) uses
+    // the secondary tint so it reads apart from the two stances on either side.
+    {
+        ScopedButtonColor tint(col::Primary);
+        if (ImGui::Button(Tr(Text::PoseStanding), ImVec2(poseButtonWidth, 44))) {
+            RestorePose(MakeStandingPose(), En(Text::PoseStanding));
+        }
+    }
+    ImGui::SameLine();
+    {
+        ScopedButtonColor tint(col::Secondary);
+        if (ImGui::Button(Tr(Text::Reset), ImVec2(poseButtonWidth, 44))) {
+            StopDanceToTPose();  // a manual reset also stops any MMD playback
+            g_app.keyboard.Neutralize();
+            g_app.fingerBends[0] = FingerBends{};
+            g_app.fingerBends[1] = FingerBends{};
+            g_app.streamer.UpdateFrame(g_app.frame, En(Text::ResetReason), false);
+        }
+    }
+    ImGui::SameLine();
+    {
+        ScopedButtonColor tint(col::Primary);
+        if (ImGui::Button(Tr(Text::PoseMenu), ImVec2(poseButtonWidth, 44))) {
+            RestorePose(MakeMenuPose(), En(Text::PoseMenu));
+        }
     }
 
     const auto recordStatus = [](const DriverActionResult& result) {
@@ -130,22 +153,28 @@ void RenderUi(HWND hwnd) {
         // dances.
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
-        if (ImGui::Button(Tr(Text::PoseSave), ImVec2(-1.0f, 0.0f))) {
-            const std::string path = SaveFileDialog(hwnd, Tr(Text::PoseSave), "AnyaDance (*.nya)", "*.nya", "nya");
-            if (!path.empty() && !WriteFileUtf8(path, SerializeNya(MakePoseClip(FrameWithCurrentFingerBends())))) {
-                MessageBoxA(hwnd, "Could not write the .nya file.", "AnyaDance", MB_OK | MB_ICONWARNING);
+        {
+            ScopedButtonColor tint(col::Primary);  // Save = primary (writes out)
+            if (ImGui::Button(Tr(Text::PoseSave), ImVec2(-1.0f, 0.0f))) {
+                const std::string path = SaveFileDialog(hwnd, Tr(Text::PoseSave), "AnyaDance (*.nya)", "*.nya", "nya");
+                if (!path.empty() && !WriteFileUtf8(path, SerializeNya(MakePoseClip(FrameWithCurrentFingerBends())))) {
+                    MessageBoxA(hwnd, "Could not write the .nya file.", "AnyaDance", MB_OK | MB_ICONWARNING);
+                }
             }
         }
         ImGui::TableSetColumnIndex(1);
-        if (ImGui::Button(Tr(Text::PoseLoad), ImVec2(-1.0f, 0.0f))) {
-            const std::string path = OpenFileDialog(hwnd, Tr(Text::PoseLoad), "AnyaDance (*.nya)", "*.nya");
-            if (!path.empty()) {
-                NyaClip clip;
-                std::string error;
-                if (ParseNya(ReadFileUtf8(path), clip, error) && !clip.motion.frames.empty()) {
-                    RestorePose(clip.motion.frames.front());
-                } else {
-                    MessageBoxA(hwnd, ("Load failed: " + error).c_str(), "AnyaDance", MB_OK | MB_ICONWARNING);
+        {
+            ScopedButtonColor tint(col::Secondary);  // Load = secondary (reads in)
+            if (ImGui::Button(Tr(Text::PoseLoad), ImVec2(-1.0f, 0.0f))) {
+                const std::string path = OpenFileDialog(hwnd, Tr(Text::PoseLoad), "AnyaDance (*.nya)", "*.nya");
+                if (!path.empty()) {
+                    NyaClip clip;
+                    std::string error;
+                    if (ParseNya(ReadFileUtf8(path), clip, error) && !clip.motion.frames.empty()) {
+                        RestorePose(clip.motion.frames.front());
+                    } else {
+                        MessageBoxA(hwnd, ("Load failed: " + error).c_str(), "AnyaDance", MB_OK | MB_ICONWARNING);
+                    }
                 }
             }
         }
@@ -155,20 +184,35 @@ void RenderUi(HWND hwnd) {
         ImGui::TableNextRow();
         ImGui::TableSetColumnIndex(0);
         const float systemButtonWidth = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x * 2.0f) / 3.0f;
-        if (ImGui::Button(Tr(Text::RegisterDriver), ImVec2(systemButtonWidth, 0.0f))) {
-            recordStatus(RegisterDriver());
+        // Driver controls: Register (primary), Unregister (secondary), and the
+        // disruptive Restart (tertiary).
+        {
+            ScopedButtonColor tint(col::Primary);
+            if (ImGui::Button(Tr(Text::RegisterDriver), ImVec2(systemButtonWidth, 0.0f))) {
+                recordStatus(RegisterDriver());
+            }
         }
         ImGui::SameLine();
-        if (ImGui::Button(Tr(Text::UnregisterDriver), ImVec2(systemButtonWidth, 0.0f))) {
-            recordStatus(UnregisterDriver());
+        {
+            ScopedButtonColor tint(col::Secondary);
+            if (ImGui::Button(Tr(Text::UnregisterDriver), ImVec2(systemButtonWidth, 0.0f))) {
+                recordStatus(UnregisterDriver());
+            }
         }
         ImGui::SameLine();
-        if (ImGui::Button(Tr(Text::RestartSteamVr), ImVec2(systemButtonWidth, 0.0f))) {
-            restartConfirmRequested = true;
+        {
+            ScopedButtonColor tint(col::Tertiary);
+            if (ImGui::Button(Tr(Text::RestartSteamVr), ImVec2(systemButtonWidth, 0.0f))) {
+                restartConfirmRequested = true;
+            }
         }
         ImGui::TableSetColumnIndex(1);
-        if (ImGui::Button(Tr(Text::DanceOpen), ImVec2(-1.0f, 0.0f))) {
-            g_app.danceDialogOpen = true;
+        {
+            // Dance is a primary feature entry point.
+            ScopedButtonColor tint(col::Primary);
+            if (ImGui::Button(Tr(Text::DanceOpen), ImVec2(-1.0f, 0.0f))) {
+                g_app.danceDialogOpen = true;
+            }
         }
         ImGui::EndTable();
     }
@@ -182,13 +226,19 @@ void RenderUi(HWND hwnd) {
         ImGui::TextUnformatted(Tr(Text::RestartConfirmBody));
         ImGui::PopTextWrapPos();
         ImGui::Spacing();
-        if (ImGui::Button(Tr(Text::RestartSteamVr), ImVec2(160.0f, 0.0f))) {
-            recordStatus(RestartSteamVR());
-            ImGui::CloseCurrentPopup();
+        {
+            ScopedButtonColor tint(col::Tertiary);
+            if (ImGui::Button(Tr(Text::RestartSteamVr), ImVec2(160.0f, 0.0f))) {
+                recordStatus(RestartSteamVR());
+                ImGui::CloseCurrentPopup();
+            }
         }
         ImGui::SameLine();
-        if (ImGui::Button(Tr(Text::Cancel), ImVec2(120.0f, 0.0f))) {
-            ImGui::CloseCurrentPopup();
+        {
+            ScopedButtonColor tint(col::Secondary);
+            if (ImGui::Button(Tr(Text::Cancel), ImVec2(120.0f, 0.0f))) {
+                ImGui::CloseCurrentPopup();
+            }
         }
         ImGui::EndPopup();
     }
