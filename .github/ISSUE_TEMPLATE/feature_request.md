@@ -3,7 +3,8 @@ name: Feature request
 about: Suggest an AnyaDance improvement
 title: "[Feature] "
 labels: enhancement
-assignees: ""
+assignees: ''
+
 ---
 
 ## Use Case
@@ -16,4 +17,3 @@ assignees: ""
 
 
 ## Compatibility / Safety Notes
-
