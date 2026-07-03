@@ -27,6 +27,7 @@
 #include "ui/localization.h"
 #include "ui/mmd_dance.h"
 #include "ui/theme.h"
+#include "ui/window_size.h"
 
 #include "imgui.h"
 
@@ -42,14 +43,6 @@
 #include <vector>
 
 namespace anyadance::ui {
-inline constexpr int kDefaultWindowWidth = 980;
-inline constexpr int kDefaultWindowHeight = 780;
-inline constexpr int kMinWindowWidth = 980;
-inline constexpr int kMinWindowHeight = 780;
-inline constexpr int kMiniWindowWidth = 360;
-inline constexpr int kMiniWindowHeight = 480;
-inline constexpr int kMiniMinWindowWidth = 280;
-inline constexpr int kMiniMinWindowHeight = 340;
 inline constexpr float kFingerBendStep = 0.1f;
 inline constexpr wchar_t kSingleInstanceMutexName[] = L"Local\\AnyaDance.SingleInstance";
 
@@ -65,11 +58,6 @@ struct ScopedHandle {
     ScopedHandle& operator=(const ScopedHandle&) = delete;
 
     HANDLE handle = nullptr;
-};
-
-enum class UiMode {
-    Full,
-    Mini,
 };
 
 // Number keys held while scrolling over the body panel target a single finger.

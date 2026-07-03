@@ -1,9 +1,25 @@
 #include "ui/ui_state.h"
+#include "ui/layout.h"
 
 #include <algorithm>
 #include <string>
 
 namespace anyadance::ui {
+namespace {
+
+constexpr ImGuiWindowFlags kRootWindowFlags =
+    ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
+    ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+static_assert((kRootWindowFlags & ImGuiWindowFlags_NoScrollbar) != 0);
+static_assert((kRootWindowFlags & ImGuiWindowFlags_NoScrollWithMouse) != 0);
+
+float MainFooterHeight() {
+    const ImGuiStyle& style = ImGui::GetStyle();
+    return MainFooterHeightForMetrics(
+        ImGui::GetFontSize(), style.FramePadding.y, style.ItemSpacing.y, style.WindowPadding.y);
+}
+
+} // namespace
 
 float DrawFooterBanner(const ImVec2& footerMin, const ImVec2& footerSize) {
     if (!g_footerBannerTexture || g_footerBannerWidth <= 0 || g_footerBannerHeight <= 0 || footerSize.x <= 0.0f || footerSize.y <= 0.0f) {
@@ -42,8 +58,13 @@ void ApplyUiMode(HWND hwnd, UiMode mode) {
     if (GetWindowRect(hwnd, &rect)) {
         const int currentW = rect.right - rect.left;
         const int currentH = rect.bottom - rect.top;
-        const int targetW = mode == UiMode::Mini ? kMiniMinWindowWidth : std::max(currentW, kMinWindowWidth);
-        const int targetH = mode == UiMode::Mini ? kMiniMinWindowHeight : std::max(currentH, kMinWindowHeight);
+        const int minClientW = MinClientWidthForMode(mode);
+        const int minClientH = MinClientHeightForMode(mode);
+        const SIZE minWindow = OuterWindowSizeForClient(hwnd, minClientW, minClientH);
+        const int minWindowW = static_cast<int>(minWindow.cx);
+        const int minWindowH = static_cast<int>(minWindow.cy);
+        const int targetW = mode == UiMode::Mini ? minWindowW : std::max(currentW, minWindowW);
+        const int targetH = mode == UiMode::Mini ? minWindowH : std::max(currentH, minWindowH);
         SetWindowPos(hwnd, nullptr, rect.left, rect.top, targetW, targetH,
                      SWP_NOZORDER | SWP_NOACTIVATE | SWP_FRAMECHANGED);
     }
@@ -103,8 +124,7 @@ Text DriverStatusText(DriverStatus status) {
 void RenderUi(HWND hwnd) {
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-    ImGui::Begin("AnyaDance", nullptr,
-        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+    ImGui::Begin("AnyaDance", nullptr, kRootWindowFlags);
 
     RenderUiModeControls(hwnd, true);
     ImGui::Separator();
@@ -258,7 +278,7 @@ void RenderUi(HWND hwnd) {
     }
 
     ImGui::Separator();
-    const float footerHeight = 74.0f;
+    const float footerHeight = MainFooterHeight();
     ImGui::BeginChild("main", ImVec2(0, -footerHeight), false);
     RenderBodyPanel(hwnd);
     ImGui::SameLine();
@@ -291,8 +311,7 @@ void RenderUi(HWND hwnd) {
 void RenderMiniUi(HWND hwnd) {
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-    ImGui::Begin("AnyaDance", nullptr,
-        ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoSavedSettings);
+    ImGui::Begin("AnyaDance", nullptr, kRootWindowFlags);
 
     RenderUiModeControls(hwnd, true);
     ImGui::Separator();
