@@ -240,10 +240,9 @@ bool ParseDeviceSample(std::string_view devicesObject, std::string_view deviceId
     sample.valid = valid;
     sample.connected = connected;
     sample.position = position;
-    if (sample.position[1] > kMaxDeviceY) {
-        sample.position[1] = kMaxDeviceY;
-        sample.y_clamped = true;
-    }
+    const float originalY = sample.position[1];
+    sample.position[1] = ClampDeviceY(sample.position[1]);
+    sample.y_clamped = sample.position[1] != originalY;
     sample.rotation_xyzw = rotation;
     sample.received_at = std::chrono::steady_clock::now();
     return true;

@@ -61,6 +61,8 @@ Set-JsonProperty -Object $driver -Name "enable" -Value $true
 Set-JsonProperty -Object $driver -Name "enable_hmd" -Value $true
 Set-JsonProperty -Object $driver -Name "enable_controllers" -Value $true
 Set-JsonProperty -Object $driver -Name "enable_trackers" -Value $true
+Set-JsonProperty -Object $driver -Name "headset_render_width" -Value 64
+Set-JsonProperty -Object $driver -Name "headset_render_height" -Value 64
 Set-JsonProperty -Object $steamvrSettings -Name "activateMultipleDrivers" -Value $true
 Set-JsonProperty -Object $steamvrSettings -Name "forcedDriver" -Value "anyadance"
 Set-JsonProperty -Object $steamvrSettings -Name "requireHmd" -Value $true

@@ -55,6 +55,10 @@ void TestSafety() {
         EXPECT_NEAR(device.position.y, 2.0f, 0.0001f);
     }
 
+    frame.devices[DeviceSlot(DeviceIndex::LeftFoot)].position.y = -6.0f;
+    EXPECT_TRUE(ClampFrameY(frame));
+    EXPECT_NEAR(frame.devices[DeviceSlot(DeviceIndex::LeftFoot)].position.y, -2.0f, 0.0001f);
+
     // A frame already under the ceiling reports no clamp and clears the flags.
     FrameState low = MakeNeutralFrame();
     EXPECT_FALSE(ClampFrameY(low));

@@ -58,7 +58,7 @@ anyadance_right_foot_001             通用追踪器
 
 ## 虚拟头显显示
 
-虚拟头显默认报告一个 `1920x1080` 的桌面窗口，以及每只眼睛 `1920x1080` 的推荐渲染目标，宽高比为 `16:9`。默认的 `left` 眼模式以单只眼睛填满窗口；`both` 模式将窗口拆分为两半，每半按 `16:9` 眼睛宽高比加黑边。SteamVR 设置可以在不重新构建驱动的情况下覆盖桌面窗口与每眼渲染目标，相关项位于 `driver_anyadance` 设置小节中的 `headset_window_width`、`headset_window_height`、`headset_render_width`、`headset_render_height`、`headset_window_eye_mode` 与 `headset_window_preserve_aspect`。高级用户可将渲染目标提升到 4K（`3840x2160`），代价是合成器渲染负载约为四倍。宽高比可以自由选择：投影会按渲染分辨率自动适配，不会被拉伸。
+虚拟头显默认报告一个 `1920x1080` 的桌面窗口，以及每只眼睛 `64x64` 的推荐渲染目标，以尽量降低合成器负载。默认的 `left` 眼模式以单只眼睛填满窗口；`both` 模式将窗口拆分为两半并保持眼睛宽高比。SteamVR 设置可以在不重新构建驱动的情况下覆盖桌面窗口与每眼渲染目标，相关项位于 `driver_anyadance` 设置小节中的 `headset_window_width`、`headset_window_height`、`headset_render_width`、`headset_render_height`、`headset_window_eye_mode` 与 `headset_window_preserve_aspect`。提高渲染目标会显著增加合成器负载。
 
 ## UI 对称
 

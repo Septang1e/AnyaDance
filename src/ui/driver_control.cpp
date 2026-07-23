@@ -219,6 +219,8 @@ void SetFullyVirtualSettings(Value& settings) {
     driver.Set("enable_hmd", Value::Bool(true));
     driver.Set("enable_controllers", Value::Bool(true));
     driver.Set("enable_trackers", Value::Bool(true));
+    driver.Set("headset_render_width", Value::Number(64.0));
+    driver.Set("headset_render_height", Value::Number(64.0));
     settings.Set("driver_anyadance", driver);
 
     // Keep the virtual HMD display awake: a held-still virtual headset never

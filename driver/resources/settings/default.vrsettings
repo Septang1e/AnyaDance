@@ -8,8 +8,8 @@
         "headset_window_y": 0,
         "headset_window_width": 1920,
         "headset_window_height": 1080,
-        "headset_render_width": 1920,
-        "headset_render_height": 1080,
+        "headset_render_width": 64,
+        "headset_render_height": 64,
         "headset_window_eye_mode": "left",
         "headset_window_preserve_aspect": true
     }

@@ -1,5 +1,6 @@
 #include "virtual_device.h"
 #include "core/constants.h"
+#include "core/math3d.h"
 #include "log.h"
 
 #include <algorithm>
@@ -17,13 +18,12 @@ namespace {
 constexpr const char* kDriverSettingsSection = anyadance::kDriverSettingsSection;
 constexpr int32_t kDefaultWindowX = 0;
 constexpr int32_t kDefaultWindowY = 0;
-// Defaults are 1080p to keep the compositor's render cost modest; advanced users
-// can raise them (for example to 4K, 3840x2160) through the headset_render_width
-// / headset_render_height settings without rebuilding the driver.
+// The virtual HMD only exists to satisfy SteamVR, so keep its compositor target
+// tiny by default and reserve GPU memory for local inference workloads.
 constexpr uint32_t kDefaultWindowWidth = 1920;
 constexpr uint32_t kDefaultWindowHeight = 1080;
-constexpr uint32_t kDefaultRenderWidth = 1920;
-constexpr uint32_t kDefaultRenderHeight = 1080;
+constexpr uint32_t kDefaultRenderWidth = 64;
+constexpr uint32_t kDefaultRenderHeight = 64;
 
 enum class HeadsetWindowEyeMode {
     Left,
@@ -688,15 +688,16 @@ DriverPose_t VirtualDevice::GetPose() {
 
 void VirtualDevice::ApplyPoseSample(const PoseSample& sample) {
     PoseSample safeSample = sample;
-    if (safeSample.position[1] > kMaxDeviceY) {
-        safeSample.position[1] = kMaxDeviceY;
+    const float originalY = safeSample.position[1];
+    safeSample.position[1] = ClampDeviceY(safeSample.position[1]);
+    if (safeSample.position[1] != originalY) {
         safeSample.y_clamped = true;
     }
     if (safeSample.y_clamped) {
         static auto lastClampWarning = std::chrono::steady_clock::time_point{};
         const auto now = std::chrono::steady_clock::now();
         if (now - lastClampWarning > std::chrono::seconds(1)) {
-            DriverLog("[anyadance] Clamped device Y to %.2f m; device=%s\n", kMaxDeviceY, m_definition.serial.c_str());
+            DriverLog("[anyadance] Clamped device Y to +/-%.2f m; device=%s\n", kMaxDeviceY, m_definition.serial.c_str());
             lastClampWarning = now;
         }
     }

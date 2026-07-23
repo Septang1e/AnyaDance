@@ -192,10 +192,10 @@ right_foot
 
 ## Y 钳制
 
-所有设备都被钳制到最大 Y 值 `2.0 m`：
+所有设备都被钳制到绝对 Y 限制 `2.0 m`：
 
 ```cpp
-position.y = std::min(position.y, 2.0f);
+position.y = std::clamp(position.y, -2.0f, 2.0f);
 ```
 
 钳制作用于 Y。伴随 UI 在序列化前钳制。原生驱动在数据包校验后再次钳制，并对重复的钳制警告进行限频。

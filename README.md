@@ -15,7 +15,7 @@ AnyaDance is a Windows toolkit for driving and animating a VRChat avatar's full 
 - left foot tracker
 - right foot tracker
 
-The driver receives pose and controller-input frames over UDP JSON on `127.0.0.1:39570`. The companion executable, `AnyaDance.exe`, starts streaming a six-device T-pose at 60 Hz as soon as it opens.
+The driver receives pose and controller-input frames over UDP JSON on `127.0.0.1:39570`. The companion executable, `AnyaDance.exe`, sends one initial six-device pose and then sends only changed frames; the driver holds the last accepted pose while idle.
 
 AnyaDance is released as part of **Project Anya**, a larger project by Pipira. Project Anya itself is proprietary. Crediting Project Anya when you use or build on this driver is highly appreciated.
 
@@ -123,7 +123,7 @@ SteamVR must be restarted after registration changes and after rebuilding the dr
 
 ## HMD Render Resolution
 
-The virtual HMD renders at `1920x1080` per eye by default, which keeps the SteamVR compositor's load modest. Advanced users can raise it without rebuilding the driver by overriding two settings keys.
+The virtual HMD renders at `64x64` per eye by default to reserve GPU memory for local inference. Advanced users can raise it without rebuilding the driver by overriding two settings keys.
 
 Edit the global `steamvr.vrsettings` (at `<Steam>\config\steamvr.vrsettings`) and add or extend the `driver_anyadance` section:
 
@@ -146,7 +146,7 @@ Values set in `steamvr.vrsettings` win over the driver defaults in `resources\se
 
 The UI:
 
-- starts 60 Hz UDP streaming automatically
+- sends an initial pose automatically, then sends UDP only when state changes
 - continues streaming while minimized or unfocused
 - sends a final neutral-input frame on normal exit
 - keeps the UDP log in English, omits unchanged keepalive packets, and names what each entry was: the key and action that changed (for example `Z left trigger down`), the device that was dragged (for example `Hip manipulated`), or a finger-bend change
@@ -208,7 +208,7 @@ ranges.
 
 ## Safety And Liveness
 
-All six devices have a hard maximum Y value of `2.0 m`. The UI clamps before serialization and the native driver clamps again after packet validation.
+All six devices have a hard absolute Y limit of `2.0 m` (`-2.0 <= Y <= 2.0`). The UI clamps before serialization and the native driver clamps again after packet validation.
 
 All six devices start connected and valid at neutral poses. Accepted packets update the latest pose and controller inputs. If packets stop, SteamVR continues to see each device connected, valid, and `TrackingResult_Running_OK` at its last accepted pose.
 

@@ -15,7 +15,7 @@ The core library owns data structures and testable behavior:
 - device constants and public identifiers
 - vector/quaternion helpers using XYZW quaternions for wire poses
 - UDP protocol parsing and serialization
-- `Y <= 2.0 m` safety clamp
+- `-2.0 m <= Y <= 2.0 m` safety clamp
 - canonical T-pose reset
 - keyboard input mapping (every key maps directly to a held button or axis)
 - mouse manipulation math
@@ -35,4 +35,4 @@ All devices start valid at neutral poses and remain valid if packets stop. The d
 
 ## UI
 
-The companion UI has a UI thread and a streaming thread. The UI thread owns ImGui rendering, keyboard polling while focused, and mouse manipulation. The streaming thread copies synchronized state, serializes once per frame, and sends a full six-device frame at 60 Hz. The UI log shows state-changing sends; unchanged keepalive packets stay quiet.
+The companion UI has a UI thread and an event-driven sender thread. The UI thread owns ImGui rendering, keyboard polling while focused, and mouse manipulation. The sender transmits one initial full six-device frame, changed frames, and a final input-release frame. The driver holds its last accepted pose, so idle keepalive datagrams are unnecessary.

@@ -59,7 +59,7 @@ Hip and feet use identity local rotations composed with HMD yaw.
 ## Virtual HMD Display
 
 The virtual HMD reports a default `1920x1080` desktop window and a recommended
-render target of `1920x1080` per eye, a `16:9` aspect ratio. The default `left`
+render target of `64x64` per eye to minimize compositor load. The default `left`
 eye mode fills the window with a single eye; `both` mode splits it into two
 halves, each letterboxed to the `16:9` eye aspect. SteamVR settings can override
 both the desktop window and the per-eye render target without rebuilding the

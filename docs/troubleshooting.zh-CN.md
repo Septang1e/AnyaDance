@@ -25,13 +25,13 @@
 
 ## 画面模糊 / 不清晰
 
-虚拟头显默认每只眼睛以 `1920x1080` 渲染。如果画面看起来模糊或不够清晰，可以提高每眼渲染分辨率：编辑 `steamvr.vrsettings` 的 `driver_anyadance` 小节，将 `headset_render_width` 与 `headset_render_height` 调高（例如 4K 为 `3840x2160`），然后重启 SteamVR。具体步骤见 README 的“HMD 渲染分辨率”一节与 [docs/device-model.zh-CN.md](device-model.zh-CN.md) 的“虚拟头显显示”。
+虚拟头显默认每只眼睛以 `64x64` 渲染，以尽量降低 GPU 占用。如果需要目视检查虚拟头显画面，可以在 `steamvr.vrsettings` 的 `driver_anyadance` 小节中提高每眼渲染分辨率，然后重启 SteamVR。具体步骤见 README 的“HMD 渲染分辨率”一节与 [docs/device-model.zh-CN.md](device-model.zh-CN.md) 的“虚拟头显显示”。
 
 > **注意：** 提高每眼渲染分辨率会大幅增加 GPU 负担。头显需要为左右两只眼睛分别渲染（相当于两块屏幕），因此分辨率的提升会同时作用在两只眼睛上：例如 4K（`3840x2160`）的像素量约为 1080p 的四倍，再叠加双眼，开销十分可观。宽高比可以自由选择（例如与你的显示器保持一致）：投影会按所设的渲染分辨率自动适配，因此不会被拉伸。
 
 ## 控制器或追踪器不动
 
-即使数据包停止，控制器与追踪器仍保持连接且有效。如果它们不动，请启动 `AnyaDance.exe` 并确认它正以 60 Hz 推送完整的六设备帧。
+数据包停止后，控制器与追踪器仍保持连接且有效。如果它们不动，请启动 `AnyaDance.exe` 并确认初始六设备帧已经发出；后续数据包只会在状态变化时发送。
 
 ## UI 关闭时头显变灰
 

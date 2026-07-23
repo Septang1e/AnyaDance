@@ -25,13 +25,13 @@ If a physical HMD is connected, SteamVR may reject the second virtual HMD. Disco
 
 ## Display Is Blurry Or Unclear
 
-The virtual HMD renders at `1920x1080` per eye by default. If the image looks soft or blurry, raise the per-eye render resolution: edit the `driver_anyadance` section of `steamvr.vrsettings`, set `headset_render_width` and `headset_render_height` higher (for example `3840x2160` for 4K), and restart SteamVR. See the HMD Render Resolution section of the README and [docs/device-model.md](device-model.md).
+The virtual HMD renders at `64x64` per eye by default to minimize GPU use. If visual inspection of the virtual HMD output is required, raise the per-eye render resolution in the `driver_anyadance` section of `steamvr.vrsettings` and restart SteamVR. See the HMD Render Resolution section of the README and [docs/device-model.md](device-model.md).
 
 > **Note:** Raising the per-eye render resolution greatly increases GPU load. The headset renders both eyes separately (effectively two screens), so the increase applies to each eye: 4K (`3840x2160`) is about four times the pixels of 1080p, and that cost is paid for both eyes. Any aspect ratio works — the projection adapts to the configured resolution, so nothing is stretched.
 
 ## Controllers Or Trackers Do Not Move
 
-Controllers and trackers stay connected and valid even when packets stop. If they do not move, start `AnyaDance.exe` and confirm it is streaming the full six-device frame at 60 Hz.
+Controllers and trackers stay connected and valid when packets stop. If they do not move, start `AnyaDance.exe` and confirm the initial full six-device frame was sent; later datagrams are emitted only when state changes.
 
 ## HMD Goes Grey When the UI Closes
 

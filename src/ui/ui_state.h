@@ -95,9 +95,9 @@ inline const char* En(Text id) {
     return Tr(id, Language::English);
 }
 
-// Owns the UDP socket and a background thread that streams the current pose to
-// the driver at kStreamRateHz. The UI thread pushes new frames (with an optional
-// reason that becomes a log entry); the worker thread does the actual sending.
+// Owns the UDP socket and a background thread that sends the initial pose and
+// subsequent changed frames. The driver keeps the last accepted pose alive, so
+// idle frames do not need periodic retransmission.
 // m_mutex guards the shared frame/socket; m_logMutex guards the log only.
 class UdpStreamer {
 public:
@@ -123,6 +123,8 @@ public:
         InetPtonA(AF_INET, kUdpHost, &m_destination.sin_addr);
         m_destination.sin_port = htons(kUdpPort);
         m_frame = initialFrame;
+        m_latestPayload = SerializeFrame(initialFrame);
+        m_frameDirty = true;
         m_running = true;
         m_thread = std::thread(&UdpStreamer::Loop, this);
         return true;
@@ -136,6 +138,8 @@ public:
             }
             NeutralizeControllerInputs(m_frame);
             m_pinnedPayload.clear();
+            m_latestPayload = SerializeFrame(m_frame);
+            m_frameDirty = true;
             m_pendingReason = m_releaseReason;
             m_pendingManipulation = false;
             m_running = false;
@@ -160,10 +164,17 @@ public:
     }
 
     void UpdateFrame(const FrameState& frame, std::string reason = {}, bool manipulation = false) {
+        const std::string payload = SerializeFrame(frame);
         {
             std::lock_guard<std::mutex> lock(m_mutex);
+            const bool changed = payload != m_latestPayload || !m_pinnedPayload.empty();
             m_frame = frame;
             m_pinnedPayload.clear();  // a new live pose supersedes a held resend
+            if (!changed) {
+                return;
+            }
+            m_latestPayload = payload;
+            m_frameDirty = true;
             if (!reason.empty()) {
                 m_pendingReason = std::move(reason);
                 m_pendingManipulation = manipulation;
@@ -222,29 +233,23 @@ private:
     }
 
     void Loop() {
-        auto nextSend = std::chrono::steady_clock::now();
         while (true) {
-            FrameState frame;
             std::string reason;
             bool manipulation = false;
             bool shouldExit = false;
-            std::string pinnedPayload;
+            std::string payload;
             {
                 std::unique_lock<std::mutex> lock(m_mutex);
-                m_cv.wait_until(lock, nextSend, [this] { return !m_running || !m_pendingReason.empty(); });
-                frame = m_frame;
+                m_cv.wait(lock, [this] { return !m_running || m_frameDirty; });
                 reason = std::move(m_pendingReason);
                 manipulation = m_pendingManipulation;
                 m_pendingReason.clear();
                 m_pendingManipulation = false;
                 shouldExit = !m_running;
-                pinnedPayload = m_pinnedPayload;
+                payload = m_pinnedPayload.empty() ? m_latestPayload : m_pinnedPayload;
+                m_frameDirty = false;
             }
 
-            // Always send the latest pose; only write a log entry when a reason
-            // is attached so the 60 Hz idle stream does not flood the log. While a
-            // resend is pinned, keep sending that exact datagram so the pose holds.
-            const std::string payload = pinnedPayload.empty() ? SerializeFrame(frame) : pinnedPayload;
             const int error = SendDatagram(payload);
             if (error != 0) {
                 std::lock_guard<std::mutex> logLock(m_logMutex);
@@ -261,7 +266,6 @@ private:
             if (shouldExit) {
                 break;
             }
-            nextSend = std::chrono::steady_clock::now() + std::chrono::milliseconds(1000 / kStreamRateHz);
         }
     }
 
@@ -274,6 +278,8 @@ private:
     sockaddr_in m_destination{};
     std::thread m_thread;
     bool m_running = false;
+    bool m_frameDirty = false;
+    std::string m_latestPayload;
     std::string m_pendingReason;
     bool m_pendingManipulation = false;
     // When non-empty, a resent datagram the loop keeps streaming verbatim so the

@@ -6,6 +6,9 @@ CMakeCache.txt
 cmake_install.cmake
 CTestTestfile.cmake
 Testing/
+cmake-build-debug/
+build/
+*.zip
 
 # Native binaries and symbols
 *.dll
@@ -42,3 +45,8 @@ Thumbs.db
 # Python bytecode (the Blender export script is plain Python, no build step)
 __pycache__/
 *.pyc
+
+# Python env
+*-venv
+dump_project.py
+project_context_snapshot.txt
